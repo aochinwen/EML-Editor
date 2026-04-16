@@ -333,9 +333,14 @@ function App() {
         {/* Email name / breadcrumb */}
         <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg" style={{ background: '#252840' }}>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-white">
+            <button
+              onClick={() => setShowExportModal(true)}
+              className="text-sm font-medium text-white hover:text-indigo-300 transition-colors flex items-center gap-1.5 outline-none"
+              title="Edit email metadata"
+            >
               {emailMeta.subject || 'Untitled Email'}
-            </span>
+              <span className="opacity-50 text-[10px]">✏️</span>
+            </button>
             <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: '#2a2d40', color: '#9ca3af' }}>
               {elements.length} block{elements.length !== 1 ? 's' : ''}
             </span>
@@ -534,10 +539,11 @@ function App() {
         </div>
 
         {/* Center: Canvas — light background */}
-        <div className="flex-1 overflow-y-auto relative" style={{ background: '#f1f5f9' }}>
+        <div className="flex-1 relative overflow-hidden" style={{ background: '#f1f5f9' }}>
+          {/* Floating Toggle Buttons (Fixed in viewport center) */}
           <button
             onClick={() => setLeftPanelCollapsed(prev => !prev)}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full border flex items-center justify-center transition-colors"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full border flex items-center justify-center transition-colors shadow-sm"
             style={{ border: '1px solid #cbd5e1', background: '#ffffff', color: '#475569' }}
             title={leftPanelCollapsed ? 'Expand left panel' : 'Collapse left panel'}
           >
@@ -545,20 +551,23 @@ function App() {
           </button>
           <button
             onClick={() => setRightPanelCollapsed(prev => !prev)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full border flex items-center justify-center transition-colors"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full border flex items-center justify-center transition-colors shadow-sm"
             style={{ border: '1px solid #cbd5e1', background: '#ffffff', color: '#475569' }}
             title={rightPanelCollapsed ? 'Expand right panel' : 'Collapse right panel'}
           >
             {rightPanelCollapsed ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
           </button>
-          <Canvas
-            elements={elements}
-            selectedId={selectedId}
-            onSelect={handleSelect}
-            onReorder={handleReorder}
-            onDelete={handleDelete}
-            onDuplicate={handleDuplicate}
-          />
+          {/* Scrolling Canvas Container */}
+          <div className="w-full h-full overflow-y-auto">
+            <Canvas
+              elements={elements}
+              selectedId={selectedId}
+              onSelect={handleSelect}
+              onReorder={handleReorder}
+              onDelete={handleDelete}
+              onDuplicate={handleDuplicate}
+            />
+          </div>
         </div>
 
         {/* Right: Property Panel — white */}
