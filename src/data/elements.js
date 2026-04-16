@@ -253,7 +253,7 @@ export const ELEMENT_TEMPLATES = {
       id: 'image-big-button',
       label: 'Big Image + Button',
       thumbnail: 'img-9',
-      defaults: { imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=560&h=300&fit=crop', tag: 'Our new product', tagColor: '#6366f1', title: 'Outdoor Oasis', body: 'Escape to your own outdoor oasis with our guide to creating a stylish and inviting outdoor space.', buttonLabel: 'Read more', buttonLink: '#', backgroundColor: '#ffffff' },
+      defaults: { imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=560&h=300&fit=crop', tag: 'Our new product', tagColor: '#6366f1', title: 'Outdoor Oasis', body: 'Escape to your own outdoor oasis with our guide to creating a stylish and inviting outdoor space.', buttonLabel: 'Read more', buttonLink: '#', backgroundColor: '#ffffff', align: 'center' },
     },
     {
       id: 'image-big-col',

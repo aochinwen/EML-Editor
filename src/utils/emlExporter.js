@@ -2,40 +2,9 @@ import { buildEmailHtml } from './htmlRenderer';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function encodeQuotedPrintable(str) {
-  return str
-    .replace(/\r\n/g, '\n')
-    .replace(/\r/g, '\n')
-    .split('\n')
-    .map(line => {
-      const bytes = new TextEncoder().encode(line);
-      let encoded = '';
-
-      for (let i = 0; i < bytes.length; i++) {
-        const byte = bytes[i];
-        if ((byte >= 33 && byte <= 126 && byte !== 61) || byte === 9 || byte === 32) {
-          encoded += String.fromCharCode(byte);
-        } else {
-          encoded += '=' + byte.toString(16).toUpperCase().padStart(2, '0');
-        }
-      }
-
-      if (encoded.endsWith(' ')) {
-        encoded = encoded.slice(0, -1) + '=20';
-      } else if (encoded.endsWith('\t')) {
-        encoded = encoded.slice(0, -1) + '=09';
-      }
-
-      const chunks = [];
-      let remaining = encoded;
-      while (remaining.length > 75) {
-        chunks.push(remaining.slice(0, 75) + '=');
-        remaining = remaining.slice(75);
-      }
-      chunks.push(remaining);
-      return chunks.join('\r\n');
-    })
-    .join('\r\n');
+function encodeBase64String(str) {
+  const binary = unescape(encodeURIComponent(str));
+  return wrapBase64(btoa(binary));
 }
 
 function wrapBase64(b64, lineLen = 76) {
@@ -152,9 +121,9 @@ export async function exportEml(elements, emailMeta) {
     ``,
     `--${altBoundary}`,
     `Content-Type: text/html; charset="UTF-8"`,
-    `Content-Transfer-Encoding: quoted-printable`,
+    `Content-Transfer-Encoding: base64`,
     ``,
-    encodeQuotedPrintable(html),
+    encodeBase64String(html),
     ``,
     `--${altBoundary}--`,
     ``,
@@ -162,18 +131,37 @@ export async function exportEml(elements, emailMeta) {
 
   const emlContent = [
     `MIME-Version: 1.0`,
+    `Message-ID: <${Date.now()}@emleditor.local>`,
     `Date: ${now}`,
     `From: ${emailMeta.from || 'sender@example.com'}`,
     `To: ${emailMeta.to || 'recipient@example.com'}`,
     emailMeta.cc  ? `CC: ${emailMeta.cc}`   : null,
     emailMeta.bcc ? `BCC: ${emailMeta.bcc}` : null,
     `Subject: ${emailMeta.subject || 'Email'}`,
-    `Content-Type: multipart/related; type="multipart/alternative"; boundary="${relBoundary}"`,
+    `X-Unsent: 1`,
+    cidMap.size > 0 
+      ? `Content-Type: multipart/related; type="multipart/alternative"; boundary="${relBoundary}"`
+      : `Content-Type: multipart/alternative; boundary="${altBoundary}"`,
     `X-Mailer: EML Editor`,
     ``,
-    altPart,
+    cidMap.size > 0 ? altPart : [
+      `--${altBoundary}`,
+      `Content-Type: text/plain; charset="UTF-8"`,
+      `Content-Transfer-Encoding: 7bit`,
+      ``,
+      plainText,
+      ``,
+      `--${altBoundary}`,
+      `Content-Type: text/html; charset="UTF-8"`,
+      `Content-Transfer-Encoding: base64`,
+      ``,
+      encodeBase64String(html),
+      ``,
+      `--${altBoundary}--`,
+    ].join('\r\n'),
     cidMap.size > 0 ? imageParts : null,
-    `--${relBoundary}--`,
+    cidMap.size > 0 ? `--${relBoundary}--` : null,
+    ``,
   ]
     .filter(line => line !== null)
     .join('\r\n');

@@ -663,13 +663,13 @@ export function renderElementHtml(element) {
 
     case 'image-big-button':
       return `<table width="100%" cellpadding="0" cellspacing="0" style="background:${getOptionalBackground(props, props.backgroundColor || '#ffffff')}">
-  <tr><td style="padding:${getInternalPadding(props, '28px 40px')}">
-    <span style="display:inline-block;background:${props.tagColor};color:#fff;font-size:11px;padding:3px 10px;border-radius:999px;font-family:sans-serif;margin-bottom:12px">${props.tag}</span>
-    <img src="${props.imageUrl}" alt="${props.alt || ''}" style="display:block;${getImageWidthStyle(props.imageWidth, '100%')}margin-bottom:16px"/>
+  <tr><td align="${props.align || 'center'}" style="padding:${getInternalPadding(props, '28px 40px')}">
+    <span style="display:inline-block;background:${props.tagColor};color:#fff;font-size:11px;padding:3px 10px;border-radius:999px;font-family:sans-serif;margin-bottom:12px">${props.tag}</span><br/>
+    <img src="${props.imageUrl}" alt="${props.alt || ''}" style="display:inline-block;${getImageWidthStyle(props.imageWidth, '100%')}margin-bottom:16px"/>
     ${props.caption ? `<p style="margin:0 0 16px;font-size:13px;color:#6b7280;font-style:italic;font-family:sans-serif">${props.caption}</p>` : ''}
     <h2 style="margin:0 0 10px;font-size:22px;color:#111827;${textStyle(props,'title')}">${props.title}</h2>
     <p style="margin:0 0 20px;color:#374151;line-height:1.6;${textStyle(props,'body')}">${props.body}</p>
-    <a href="${props.buttonLink}" style="background:#4F46E5;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-family:sans-serif">${props.buttonLabel}</a>
+    <a href="${props.buttonLink}" style="background:#4F46E5;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-family:sans-serif;display:inline-block">${props.buttonLabel}</a>
   </td></tr>
 </table>`;
 

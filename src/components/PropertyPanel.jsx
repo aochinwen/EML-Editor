@@ -566,6 +566,7 @@ const fieldConfig = {
     { key: 'buttonLink', label: 'Button Link', type: 'text' },
     { key: 'useBackgroundColor', label: 'Background Fill', type: 'boolean', checkboxLabel: 'Enable background color' },
     { key: 'backgroundColor', label: 'Background', type: 'color' },
+    { key: 'align', label: 'Alignment', type: 'select', options: [{ value: 'left', label: 'Left' }, { value: 'center', label: 'Center' }, { value: 'right', label: 'Right' }] },
   ],
   'image-big-col': [
     { key: 'mainImage', label: 'Main Image URL', type: 'image' },
