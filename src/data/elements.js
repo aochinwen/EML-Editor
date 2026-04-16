@@ -133,7 +133,7 @@ export const ELEMENT_TEMPLATES = {
       id: 'content-update',
       label: 'Blog Update',
       thumbnail: 'content-5',
-      defaults: { tag: 'New', tagColor: '#6366f1', title: 'December Update', body: 'The December Update introduces a completely redesigned Page Panel, adding support for nesting and folders.', imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=560&h=220&fit=crop', readMoreLink: '#', readMoreLabel: 'Read more →', backgroundColor: '#ffffff' },
+      defaults: { tags: [{ text: 'New', color: '#6366f1' }], title: 'December Update', body: 'The December Update introduces a completely redesigned Page Panel, adding support for nesting and folders.', imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=560&h=220&fit=crop', readMoreLink: '#', readMoreLabel: 'Read more →', backgroundColor: '#ffffff' },
     },
     {
       id: 'content-blog-two-col',
@@ -182,7 +182,7 @@ export const ELEMENT_TEMPLATES = {
       id: 'content-intro',
       label: 'Intro + Tag',
       thumbnail: 'content-11',
-      defaults: { tag: "What's new", tagColor: '#6366f1', title: 'All Features', body: 'Discover how to effortlessly blend different styles, textures, and eras for a unique cohesive look.', backgroundColor: '#ffffff', align: 'left' },
+      defaults: { tags: [{ text: "What's new", color: '#6366f1' }], title: 'All Features', body: 'Discover how to effortlessly blend different styles, textures, and eras for a unique cohesive look.', backgroundColor: '#ffffff', align: 'left' },
     },
   ],
 
@@ -241,19 +241,19 @@ export const ELEMENT_TEMPLATES = {
       id: 'image-left-text',
       label: 'Image Left + Text',
       thumbnail: 'img-7',
-      defaults: { imageUrl: 'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=240&h=180&fit=crop', tag: "What's new", title: 'Sustainable Living', body: 'Explore how sustainable furniture choices can make a positive impact on the environment without compromising on style or comfort.', readMoreLink: '#', backgroundColor: '#ffffff' },
+      defaults: { imageUrl: 'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=240&h=180&fit=crop', tags: [{ text: "What's new", color: '#6366f1' }], title: 'Sustainable Living', body: 'Explore how sustainable furniture choices can make a positive impact on the environment without compromising on style or comfort.', readMoreLink: '#', backgroundColor: '#ffffff' },
     },
     {
       id: 'image-right-text',
       label: 'Image Right + Text',
       thumbnail: 'img-8',
-      defaults: { imageUrl: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=240&h=180&fit=crop', tag: "What's new", title: 'The Art of Mixing', body: 'Unlock the secrets of successful furniture mixing and learn how to effortlessly blend different styles, textures, and eras.', readMoreLink: '#', backgroundColor: '#ffffff' },
+      defaults: { imageUrl: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=240&h=180&fit=crop', tags: [{ text: "What's new", color: '#6366f1' }], title: 'The Art of Mixing', body: 'Unlock the secrets of successful furniture mixing and learn how to effortlessly blend different styles, textures, and eras.', readMoreLink: '#', backgroundColor: '#ffffff' },
     },
     {
       id: 'image-big-button',
       label: 'Big Image + Button',
       thumbnail: 'img-9',
-      defaults: { imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=560&h=300&fit=crop', tag: 'Our new product', tagColor: '#6366f1', title: 'Outdoor Oasis', body: 'Escape to your own outdoor oasis with our guide to creating a stylish and inviting outdoor space.', buttonLabel: 'Read more', buttonLink: '#', backgroundColor: '#ffffff', align: 'center' },
+      defaults: { imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=560&h=300&fit=crop', tags: [{ text: 'Our new product', color: '#6366f1' }], title: 'Outdoor Oasis', body: 'Escape to your own outdoor oasis with our guide to creating a stylish and inviting outdoor space.', buttonLabel: 'Read more', buttonLink: '#', backgroundColor: '#ffffff', align: 'center' },
     },
     {
       id: 'image-big-col',
@@ -261,7 +261,7 @@ export const ELEMENT_TEMPLATES = {
       thumbnail: 'img-10',
       defaults: {
         mainImage: 'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=280&h=300&fit=crop',
-        mainTag: "What's new",
+        tags: [{ text: "What's new", color: '#6366f1' }],
         mainTitle: 'Effortless Elegance',
         mainBody: 'Discover how to effortlessly infuse elegance into your space.',
         sideArticles: [
@@ -339,7 +339,7 @@ export const ELEMENT_TEMPLATES = {
       id: 'cta-event',
       label: 'Event Invite',
       thumbnail: 'cta-9',
-      defaults: { tag: 'You\'re Invited', title: 'Annual Design Summit 2025', date: 'Thursday, May 15, 2025 · 10:00 AM', location: 'Marina Bay Sands, Singapore', buttonLabel: 'RSVP Now', buttonLink: '#', backgroundColor: '#1e1b4b', textColor: '#e0e7ff', buttonColor: '#818cf8', buttonTextColor: '#fff' },
+      defaults: { tags: [{ text: 'You\'re Invited', color: 'rgba(255,255,255,0.15)' }], title: 'Annual Design Summit 2025', date: 'Thursday, May 15, 2025 · 10:00 AM', location: 'Marina Bay Sands, Singapore', buttonLabel: 'RSVP Now', buttonLink: '#', backgroundColor: '#1e1b4b', textColor: '#e0e7ff', buttonColor: '#818cf8', buttonTextColor: '#fff' },
     },
   ],
 
@@ -386,7 +386,7 @@ export const ELEMENT_TEMPLATES = {
       id: 'ecom-featured',
       label: 'Featured Collection',
       thumbnail: 'ecom-5',
-      defaults: { tag: 'Editor\'s Pick', title: 'Living Room Collection', body: 'Carefully curated pieces to transform your living space.', imageUrl: 'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=280&h=260&fit=crop', buttonLabel: 'View Collection', buttonLink: '#', backgroundColor: '#fafaf9', align: 'right' },
+      defaults: { tags: [{ text: 'Editor\'s Pick', color: '#6366f1' }], title: 'Living Room Collection', body: 'Carefully curated pieces to transform your living space.', imageUrl: 'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=280&h=260&fit=crop', buttonLabel: 'View Collection', buttonLink: '#', backgroundColor: '#fafaf9', align: 'right' },
     },
     {
       id: 'ecom-order-confirm',

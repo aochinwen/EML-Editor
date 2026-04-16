@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { X, Mail } from 'lucide-react';
 
 export default function EmailMetaModal({ meta, onChange, onClose, onExport }) {
+  const [exportMode, setExportMode] = useState('standard');
   const field = (label, key, placeholder = '') => (
     <div className="mb-4">
       <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
@@ -42,6 +44,39 @@ export default function EmailMetaModal({ meta, onChange, onClose, onExport }) {
               <strong>Tip:</strong> Open the exported .eml file directly in Outlook to compose and send it. The To/From/CC fields can be changed in Outlook before sending.
             </p>
           </div>
+          
+          <div className="mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Export Mode</label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="exportMode" 
+                  value="standard"
+                  checked={exportMode === 'standard'}
+                  onChange={e => setExportMode(e.target.value)}
+                  className="text-indigo-600 focus:ring-indigo-500"
+                />
+                Standard EML
+              </label>
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="exportMode" 
+                  value="image"
+                  checked={exportMode === 'image'}
+                  onChange={e => setExportMode(e.target.value)}
+                  className="text-indigo-600 focus:ring-indigo-500"
+                />
+                Image Slice EML
+              </label>
+            </div>
+            {exportMode === 'image' && (
+              <p className="mt-2 text-xs text-indigo-600">
+                Converts your design into seamlessly stacked images, guaranteeing perfect visual compatibility in all email clients.
+              </p>
+            )}
+          </div>
         </div>
         <div className="px-6 pb-5 flex gap-3">
           <button
@@ -51,7 +86,7 @@ export default function EmailMetaModal({ meta, onChange, onClose, onExport }) {
             Cancel
           </button>
           <button
-            onClick={onExport}
+            onClick={() => onExport(exportMode)}
             className="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl font-medium hover:bg-indigo-700 transition-colors"
           >
             Download .eml

@@ -18,6 +18,16 @@ function renderOptionalLink(href, content, style) {
   return `<a href="${href}" style="${style}">${content}</a>`;
 }
 
+function renderTags(props, defaultAlign = 'left', marginBottom = '12px') {
+  const hasTagsArray = Array.isArray(props.tags) && props.tags.length > 0;
+  const fallbackTag = props.tag || props.mainTag;
+  if (!hasTagsArray && !fallbackTag) return '';
+  const align = props.tagsAlign || defaultAlign;
+  const tagsToRender = hasTagsArray ? props.tags : [{ text: fallbackTag, color: props.tagColor || '#6366f1' }];
+  
+  return `<div style="text-align:${align}; margin-bottom:${marginBottom};">\n${tagsToRender.map(t => `  <span style="display:inline-block;background:${t.color || '#6366f1'};color:#fff;font-size:11px;padding:3px 10px;border-radius:999px;font-family:sans-serif;margin:0 4px 4px 0">${t.text}</span>`).join('\n')}\n</div>`;
+}
+
 function resolveHiddenProps(rawProps = {}) {
   const next = { ...rawProps };
   Object.keys(rawProps).forEach((k) => {
@@ -67,13 +77,14 @@ function usesInternalPaddingOverride(type = '') {
   ].includes(type);
 }
 
-function withElementSpacing(html, props = {}) {
+export function withElementSpacing(html, props = {}) {
   const padding = (props.elementPadding || '').trim();
   const margin = (props.elementMargin || '').trim();
   if (!padding && !margin) return html;
 
   const { top, bottom } = parseVerticalMargin(margin);
-  const tdStyle = [padding ? `padding:${padding}` : '', margin ? `margin:${margin}` : '']
+  const bgStyle = (props.useBackgroundColor && props.backgroundColor) ? `background-color:${props.backgroundColor};` : '';
+  const tdStyle = [padding ? `padding:${padding}` : '', margin ? `margin:${margin}` : '', bgStyle]
     .filter(Boolean)
     .join(';');
 
@@ -245,7 +256,7 @@ export function renderElementHtml(element) {
   <tr><td align="center" style="padding:48px 40px">
     <h2 style="margin:0 0 8px;font-size:26px;color:${props.textColor};font-family:sans-serif">${props.title}</h2>
     <p style="margin:0 0 24px;color:${props.textColor};opacity:0.85;font-family:sans-serif">${props.subtitle}</p>
-    <a href="${props.buttonLink}" style="background:${props.buttonColor};color:${props.buttonTextColor};padding:14px 36px;border-radius:8px;text-decoration:none;font-size:16px;font-weight:600;font-family:sans-serif">${props.buttonLabel}</a>
+    ${props.buttonLabel ? `<a href="${props.buttonLink}" style="background:${props.buttonColor};color:${props.buttonTextColor};padding:14px 36px;border-radius:8px;text-decoration:none;font-size:16px;font-weight:600;font-family:sans-serif;display:inline-block;line-height:1.5"><span style="position:relative">${props.buttonLabel}</span></a>` : ''}
   </td></tr>
 </table>`;
 
@@ -254,7 +265,7 @@ export function renderElementHtml(element) {
   <tr>
     <td style="padding:16px 24px;color:${props.textColor};font-size:16px;font-family:sans-serif">${props.text}</td>
     <td align="right" style="padding:16px 24px;white-space:nowrap">
-      <a href="${props.buttonLink}" style="background:${props.buttonColor};color:${props.buttonTextColor};padding:10px 24px;border-radius:6px;text-decoration:none;font-family:sans-serif">${props.buttonLabel}</a>
+      <a href="${props.buttonLink}" style="background:${props.buttonColor};color:${props.buttonTextColor};padding:10px 24px;border-radius:6px;text-decoration:none;font-family:sans-serif;display:inline-block;line-height:1.5"><span style="position:relative">${props.buttonLabel}</span></a>
     </td>
   </tr>
 </table>`;
@@ -267,7 +278,7 @@ export function renderElementHtml(element) {
       <p style="margin:0;color:${props.textColor};opacity:0.75;font-family:sans-serif">${props.body}</p>
     </td>
     <td align="right" style="padding:32px 40px 32px 24px;vertical-align:middle;white-space:nowrap">
-      <a href="${props.buttonLink}" style="background:${props.buttonColor};color:${props.buttonTextColor};padding:12px 28px;border-radius:6px;text-decoration:none;font-family:sans-serif">${props.buttonLabel}</a>
+      <a href="${props.buttonLink}" style="background:${props.buttonColor};color:${props.buttonTextColor};padding:12px 28px;border-radius:6px;text-decoration:none;font-family:sans-serif;display:inline-block;line-height:1.5"><span style="position:relative">${props.buttonLabel}</span></a>
     </td>
   </tr>
 </table>`;
@@ -276,14 +287,14 @@ export function renderElementHtml(element) {
     case 'button-pill':
       return `<table width="100%" cellpadding="0" cellspacing="0">
   <tr><td align="${props.align || 'center'}" style="padding:24px 40px">
-    <a href="${props.link}" style="background:${props.backgroundColor};color:${props.textColor};padding:12px 32px;border-radius:${props.borderRadius};border:${props.border || 'none'};text-decoration:none;font-size:15px;font-weight:600;font-family:sans-serif">${props.label}</a>
+    <a href="${props.link}" style="background:${props.backgroundColor};color:${props.textColor};padding:12px 32px;border-radius:${props.borderRadius};border:${props.border || 'none'};text-decoration:none;font-size:15px;font-weight:600;font-family:sans-serif;display:inline-block;line-height:1.5"><span style="position:relative">${props.label}</span></a>
   </td></tr>
 </table>`;
 
     case 'button-outline':
       return `<table width="100%" cellpadding="0" cellspacing="0">
   <tr><td align="${props.align || 'center'}" style="padding:24px 40px">
-    <a href="${props.link}" style="background:${props.backgroundColor};color:${props.textColor};padding:12px 32px;border-radius:${props.borderRadius};border:${props.border};text-decoration:none;font-size:15px;font-weight:600;font-family:sans-serif">${props.label}</a>
+    <a href="${props.link}" style="background:${props.backgroundColor};color:${props.textColor};padding:12px 32px;border-radius:${props.borderRadius};border:${props.border};text-decoration:none;font-size:15px;font-weight:600;font-family:sans-serif;display:inline-block;line-height:1.5"><span style="position:relative">${props.label}</span></a>
   </td></tr>
 </table>`;
 
@@ -327,7 +338,7 @@ export function renderElementHtml(element) {
     <h3 style="margin:0 0 4px;font-size:18px;color:#111827;font-family:sans-serif">${props.title}</h3>
     <p style="margin:0 0 8px;font-size:20px;font-weight:700;color:#4F46E5;font-family:sans-serif">${props.price}</p>
     <p style="margin:0 0 16px;color:#6b7280;font-family:sans-serif">${props.description}</p>
-    <a href="${props.buttonLink}" style="background:#4F46E5;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-family:sans-serif">${props.buttonLabel}</a>
+    <a href="${props.buttonLink}" style="background:#4F46E5;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-family:sans-serif;display:inline-block;line-height:1.5"><span style="position:relative">${props.buttonLabel}</span></a>
   </td></tr>
 </table>`;
 
@@ -516,7 +527,7 @@ export function renderElementHtml(element) {
     <td width="50%" style="padding:24px;vertical-align:middle">
       <h2 style="margin:0 0 12px;font-size:22px;color:#111827;${textStyle(props,'title')}">${props.title}</h2>
       <p style="margin:0 0 20px;color:#374151;${textStyle(props,'body')}">${props.body}</p>
-      <a href="${props.ctaLink}" style="background:#4F46E5;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-family:sans-serif">${props.ctaLabel}</a>
+      ${props.ctaLabel ? `<a href="${props.ctaLink}" style="background:#4F46E5;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-family:sans-serif;display:inline-block;line-height:1.5"><span style="position:relative">${props.ctaLabel}</span></a>` : ''}
     </td>
   </tr>
 </table>`;
@@ -536,7 +547,7 @@ export function renderElementHtml(element) {
   <tr><td align="center" style="padding:48px 40px">
     <h1 style="margin:0 0 12px;font-size:28px;color:${props.textColor};${textStyle(props,'title')}">${props.title}</h1>
     <p style="margin:0 0 24px;color:${props.textColor};opacity:0.8;${textStyle(props,'subtitle')}">${props.subtitle}</p>
-    <a href="${props.ctaLink}" style="background:#0ea5e9;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-family:sans-serif">${props.ctaLabel}</a>
+    ${props.ctaLabel ? `<a href="${props.ctaLink}" style="background:#0ea5e9;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-family:sans-serif;display:inline-block;line-height:1.5"><span style="position:relative">${props.ctaLabel}</span></a>` : ''}
   </td></tr>
 </table>`;
 
@@ -544,7 +555,7 @@ export function renderElementHtml(element) {
     case 'content-update':
       return `<table width="100%" cellpadding="0" cellspacing="0" style="background:${props.backgroundColor}">
   <tr><td style="padding:32px 40px">
-    <span style="display:inline-block;background:${props.tagColor};color:#fff;font-size:11px;padding:3px 10px;border-radius:999px;font-family:sans-serif;margin-bottom:10px">${props.tag}</span>
+    ${renderTags(props, 'left', '10px')}
     <h2 style="margin:0 0 10px;font-size:22px;color:#111827;${textStyle(props,'title')}">${props.title}</h2>
     <img src="${props.imageUrl}" width="100%" style="display:block;border-radius:6px;margin-bottom:16px"/>
     <p style="margin:0 0 16px;color:#374151;line-height:1.6;${textStyle(props,'body')}">${props.body}</p>
@@ -602,7 +613,7 @@ export function renderElementHtml(element) {
     case 'content-intro':
       return `<table width="100%" cellpadding="0" cellspacing="0" style="background:${props.backgroundColor}">
   <tr><td style="padding:32px 40px" align="${props.align || 'left'}">
-    <span style="display:inline-block;background:${props.tagColor};color:#fff;font-size:11px;padding:3px 10px;border-radius:999px;font-family:sans-serif;margin-bottom:12px">${props.tag}</span>
+    ${renderTags(props, 'left', '12px')}
     <h2 style="margin:0 0 12px;font-size:24px;color:#111827;${textStyle(props,'title')}">${props.title}</h2>
     <p style="margin:0;color:#374151;line-height:1.6;${textStyle(props,'body')}">${props.body}</p>
   </td></tr>
@@ -640,7 +651,7 @@ export function renderElementHtml(element) {
   <tr>
     <td width="${getSplitColumnWidths(props.imageColumnWidth, '42%', '58%').primary}" style="padding:${getInternalPadding(props, '20px')}"><img src="${props.imageUrl}" alt="${props.alt || ''}" style="display:block;${getImageWidthStyle(props.imageWidth, '100%')}"/>${props.caption ? `<p style="margin:8px 0 0;font-size:13px;color:#6b7280;font-style:italic;font-family:sans-serif">${props.caption}</p>` : ''}</td>
     <td width="${getSplitColumnWidths(props.imageColumnWidth, '42%', '58%').secondary}" style="padding:${getInternalPadding(props, '20px 28px')};vertical-align:middle">
-      <span style="display:inline-block;background:#6366f1;color:#fff;font-size:11px;padding:3px 10px;border-radius:999px;font-family:sans-serif;margin-bottom:10px">${props.tag}</span>
+      ${renderTags(props, 'left', '10px')}
       <h2 style="margin:0 0 10px;font-size:20px;color:#111827;${textStyle(props,'title')}">${props.title}</h2>
       <p style="margin:0 0 14px;color:#374151;line-height:1.6;${textStyle(props,'body')}">${props.body}</p>
       ${renderOptionalLink(props.readMoreLink, 'Read more →', 'color:#6366f1;text-decoration:none;font-family:sans-serif;font-weight:600')}
@@ -652,7 +663,7 @@ export function renderElementHtml(element) {
       return `<table width="100%" cellpadding="0" cellspacing="0" style="background:${getOptionalBackground(props, props.backgroundColor || '#ffffff')}">
   <tr>
     <td width="${getSplitColumnWidths(props.imageColumnWidth, '58%', '42%').primary}" style="padding:${getInternalPadding(props, '20px 28px')};vertical-align:middle">
-      <span style="display:inline-block;background:#6366f1;color:#fff;font-size:11px;padding:3px 10px;border-radius:999px;font-family:sans-serif;margin-bottom:10px">${props.tag}</span>
+      ${renderTags(props, 'left', '10px')}
       <h2 style="margin:0 0 10px;font-size:20px;color:#111827;${textStyle(props,'title')}">${props.title}</h2>
       <p style="margin:0 0 14px;color:#374151;line-height:1.6;${textStyle(props,'body')}">${props.body}</p>
       ${renderOptionalLink(props.readMoreLink, 'Read more →', 'color:#6366f1;text-decoration:none;font-family:sans-serif;font-weight:600')}
@@ -664,12 +675,12 @@ export function renderElementHtml(element) {
     case 'image-big-button':
       return `<table width="100%" cellpadding="0" cellspacing="0" style="background:${getOptionalBackground(props, props.backgroundColor || '#ffffff')}">
   <tr><td align="${props.align || 'center'}" style="padding:${getInternalPadding(props, '28px 40px')}">
-    <span style="display:inline-block;background:${props.tagColor};color:#fff;font-size:11px;padding:3px 10px;border-radius:999px;font-family:sans-serif;margin-bottom:12px">${props.tag}</span><br/>
+    ${renderTags(props, 'center', '12px')}
     <img src="${props.imageUrl}" alt="${props.alt || ''}" style="display:inline-block;${getImageWidthStyle(props.imageWidth, '100%')}margin-bottom:16px"/>
     ${props.caption ? `<p style="margin:0 0 16px;font-size:13px;color:#6b7280;font-style:italic;font-family:sans-serif">${props.caption}</p>` : ''}
     <h2 style="margin:0 0 10px;font-size:22px;color:#111827;${textStyle(props,'title')}">${props.title}</h2>
     <p style="margin:0 0 20px;color:#374151;line-height:1.6;${textStyle(props,'body')}">${props.body}</p>
-    <a href="${props.buttonLink}" style="background:#4F46E5;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-family:sans-serif;display:inline-block">${props.buttonLabel}</a>
+    ${props.buttonLabel ? `<a href="${props.buttonLink}" style="background:#4F46E5;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-family:sans-serif;display:inline-block;line-height:1.5"><span style="position:relative">${props.buttonLabel}</span></a>` : ''}
   </td></tr>
 </table>`;
 
@@ -677,7 +688,7 @@ export function renderElementHtml(element) {
       return `<table width="100%" cellpadding="0" cellspacing="0" style="background:${getOptionalBackground(props, props.backgroundColor || '#ffffff')}">
   <tr>
     <td width="${getSplitColumnWidths(props.mainColumnWidth, '48%', '52%').primary}" style="padding:${getInternalPadding(props, '20px')};vertical-align:top">
-      <span style="font-size:11px;color:#6366f1;font-family:sans-serif">${props.mainTag}</span>
+      ${renderTags({ ...props, tagsAlign: props.tagsAlign || 'left' }, 'left', '8px')}
       <img src="${props.mainImage}" alt="${props.alt || ''}" style="display:block;${getImageWidthStyle(props.imageWidth, '100%')}margin:8px 0"/>
       ${props.caption ? `<p style="margin:0 0 16px;font-size:13px;color:#6b7280;font-style:italic;font-family:sans-serif">${props.caption}</p>` : ''}
       <h2 style="margin:0 0 8px;font-size:18px;color:#111827;font-family:sans-serif">${props.mainTitle}</h2>
@@ -787,7 +798,7 @@ export function renderElementHtml(element) {
     case 'cta-event':
       return `<table width="100%" cellpadding="0" cellspacing="0" style="background:${props.backgroundColor}">
   <tr><td align="center" style="padding:40px 40px">
-    <span style="display:inline-block;background:rgba(255,255,255,0.15);color:${props.textColor};font-size:12px;padding:4px 14px;border-radius:999px;font-family:sans-serif;margin-bottom:14px">${props.tag}</span>
+    ${renderTags({ ...props, tagColor: props.tagColor || 'rgba(255,255,255,0.15)' }, 'center', '14px')}
     <h2 style="margin:0 0 10px;font-size:24px;color:${props.textColor};font-family:sans-serif">${props.title}</h2>
     <p style="margin:0 0 4px;color:${props.textColor};opacity:0.8;font-family:sans-serif">📅 ${props.date}</p>
     <p style="margin:0 0 24px;color:${props.textColor};opacity:0.8;font-family:sans-serif">📍 ${props.location}</p>
@@ -851,7 +862,7 @@ export function renderElementHtml(element) {
   <tr>
     ${props.align === 'right' ? `
     <td width="50%" style="padding:28px;vertical-align:middle">
-      <span style="display:inline-block;background:#6366f1;color:#fff;font-size:11px;padding:3px 10px;border-radius:999px;font-family:sans-serif;margin-bottom:12px">${props.tag}</span>
+      ${renderTags(props, 'left', '12px')}
       <h2 style="margin:0 0 10px;font-size:22px;color:#111827;${textStyle(props,'title')}">${props.title}</h2>
       <p style="margin:0 0 20px;color:#374151;line-height:1.6;${textStyle(props,'body')}">${props.body}</p>
       <a href="${props.buttonLink}" style="background:#4F46E5;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-family:sans-serif;font-weight:600">${props.buttonLabel}</a>
@@ -860,7 +871,7 @@ export function renderElementHtml(element) {
     ` : `
     <td width="50%" style="padding:20px"><img src="${props.imageUrl}" width="100%" style="display:block;border-radius:8px"/></td>
     <td width="50%" style="padding:28px;vertical-align:middle">
-      <span style="display:inline-block;background:#6366f1;color:#fff;font-size:11px;padding:3px 10px;border-radius:999px;font-family:sans-serif;margin-bottom:12px">${props.tag}</span>
+      ${renderTags(props, 'left', '12px')}
       <h2 style="margin:0 0 10px;font-size:22px;color:#111827;${textStyle(props,'title')}">${props.title}</h2>
       <p style="margin:0 0 20px;color:#374151;line-height:1.6;${textStyle(props,'body')}">${props.body}</p>
       <a href="${props.buttonLink}" style="background:#4F46E5;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-family:sans-serif;font-weight:600">${props.buttonLabel}</a>

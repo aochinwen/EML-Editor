@@ -5,7 +5,7 @@ import Canvas from './components/Canvas';
 import PropertyPanel from './components/PropertyPanel';
 import EmailMetaModal from './components/EmailMetaModal';
 import PreviewModal from './components/PreviewModal';
-import { downloadEml } from './utils/emlExporter';
+import { downloadEml, downloadImageEml } from './utils/emlExporter';
 import { importEml } from './utils/emlImporter';
 import {
   clearSessionFromStorage,
@@ -289,11 +289,18 @@ function App() {
     refreshSavedSessions();
   };
 
-  const handleExport = async () => {
+  const handleExport = async (mode = 'standard') => {
     setShowExportModal(false);
     setExporting(true);
     try {
-      await downloadEml(elements, emailMeta);
+      if (mode === 'image') {
+        await downloadImageEml(elements, emailMeta);
+      } else {
+        await downloadEml(elements, emailMeta);
+      }
+    } catch (e) {
+      console.error(e);
+      window.alert('An error occurred during export.');
     } finally {
       setExporting(false);
     }

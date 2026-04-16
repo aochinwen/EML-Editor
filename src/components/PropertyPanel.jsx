@@ -265,15 +265,26 @@ function SlideEditor({ slides, onChange, fields }) {
           {fields.map(f => (
             <div key={f.key} className="mb-1">
               <label className="text-xs text-gray-400 mb-0.5 block">{f.label}</label>
-              <input
-                value={slide[f.key] ?? ''}
-                onChange={e => {
-                  const next = [...slides];
-                  next[i] = { ...next[i], [f.key]: e.target.value };
-                  onChange(next);
-                }}
-                className="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
-              />
+              {(f.type === 'image' || f.key === 'imageUrl' || f.key === 'url') ? (
+                <ImageUpload
+                  value={slide[f.key] ?? ''}
+                  onChange={(val) => {
+                    const next = [...slides];
+                    next[i] = { ...next[i], [f.key]: val };
+                    onChange(next);
+                  }}
+                />
+              ) : (
+                <input
+                  value={slide[f.key] ?? ''}
+                  onChange={e => {
+                    const next = [...slides];
+                    next[i] = { ...next[i], [f.key]: e.target.value };
+                    onChange(next);
+                  }}
+                  className="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                />
+              )}
             </div>
           ))}
         </div>
@@ -536,7 +547,8 @@ const fieldConfig = {
     { key: 'imageUrl', label: 'Image URL', type: 'image' },
     { key: 'caption', label: 'Image Caption', type: 'text' },
     { key: 'imageColumnWidth', label: 'Image Column Width (e.g. 42%)', type: 'text' },
-    { key: 'tag', label: 'Tag', type: 'text' },
+    { key: 'tags', label: 'Tags', type: 'slides', fields: [{ key: 'text', label: 'Tag Text' }, { key: 'color', label: 'Tag Color' }] },
+    { key: 'tagsAlign', label: 'Tags Alignment', type: 'select', options: [{ value: 'left', label: 'Left' }, { value: 'center', label: 'Center' }, { value: 'right', label: 'Right' }] },
     { key: 'title', label: 'Title', type: 'richtext' },
     { key: 'body', label: 'Body', type: 'richtext', rows: 4 },
     { key: 'readMoreLink', label: 'Read More Link', type: 'text' },
@@ -547,7 +559,8 @@ const fieldConfig = {
     { key: 'imageUrl', label: 'Image URL', type: 'image' },
     { key: 'caption', label: 'Image Caption', type: 'text' },
     { key: 'imageColumnWidth', label: 'Image Column Width (e.g. 42%)', type: 'text' },
-    { key: 'tag', label: 'Tag', type: 'text' },
+    { key: 'tags', label: 'Tags', type: 'slides', fields: [{ key: 'text', label: 'Tag Text' }, { key: 'color', label: 'Tag Color' }] },
+    { key: 'tagsAlign', label: 'Tags Alignment', type: 'select', options: [{ value: 'left', label: 'Left' }, { value: 'center', label: 'Center' }, { value: 'right', label: 'Right' }] },
     { key: 'title', label: 'Title', type: 'richtext' },
     { key: 'body', label: 'Body', type: 'richtext', rows: 4 },
     { key: 'readMoreLink', label: 'Read More Link', type: 'text' },
@@ -558,8 +571,8 @@ const fieldConfig = {
     { key: 'imageUrl', label: 'Image URL', type: 'image' },
     { key: 'caption', label: 'Caption', type: 'text' },
     { key: 'imageWidth', label: 'Image Width (e.g. 420px or 100%)', type: 'text' },
-    { key: 'tag', label: 'Tag', type: 'text' },
-    { key: 'tagColor', label: 'Tag Color', type: 'color' },
+    { key: 'tags', label: 'Tags', type: 'slides', fields: [{ key: 'text', label: 'Tag Text' }, { key: 'color', label: 'Tag Color' }] },
+    { key: 'tagsAlign', label: 'Tags Alignment', type: 'select', options: [{ value: 'left', label: 'Left' }, { value: 'center', label: 'Center' }, { value: 'right', label: 'Right' }] },
     { key: 'title', label: 'Title', type: 'richtext' },
     { key: 'body', label: 'Body', type: 'richtext', rows: 4 },
     { key: 'buttonLabel', label: 'Button Label', type: 'text' },
@@ -572,7 +585,8 @@ const fieldConfig = {
     { key: 'mainImage', label: 'Main Image URL', type: 'image' },
     { key: 'caption', label: 'Image Caption', type: 'text' },
     { key: 'mainColumnWidth', label: 'Main Column Width (e.g. 48%)', type: 'text' },
-    { key: 'mainTag', label: 'Main Tag', type: 'text' },
+    { key: 'tags', label: 'Tags', type: 'slides', fields: [{ key: 'text', label: 'Tag Text' }, { key: 'color', label: 'Tag Color' }] },
+    { key: 'tagsAlign', label: 'Tags Alignment', type: 'select', options: [{ value: 'left', label: 'Left' }, { value: 'center', label: 'Center' }, { value: 'right', label: 'Right' }] },
     { key: 'mainTitle', label: 'Main Title', type: 'text' },
     { key: 'mainBody', label: 'Main Body', type: 'textarea' },
     { key: 'sideArticles', label: 'Side Articles', type: 'slides', fields: [{ key: 'date', label: 'Date' }, { key: 'title', label: 'Title' }, { key: 'body', label: 'Body' }, { key: 'link', label: 'Link' }, { key: 'imageUrl', label: 'Image URL' }] },
@@ -614,7 +628,8 @@ const fieldConfig = {
     { key: 'textColor', label: 'Text Color', type: 'color' },
   ],
   'cta-event': [
-    { key: 'tag', label: 'Tag', type: 'text' },
+    { key: 'tags', label: 'Tags', type: 'slides', fields: [{ key: 'text', label: 'Tag Text' }, { key: 'color', label: 'Tag Color' }] },
+    { key: 'tagsAlign', label: 'Tags Alignment', type: 'select', options: [{ value: 'left', label: 'Left' }, { value: 'center', label: 'Center' }, { value: 'right', label: 'Right' }] },
     { key: 'title', label: 'Title', type: 'text' },
     { key: 'date', label: 'Date', type: 'text' },
     { key: 'location', label: 'Location', type: 'text' },
@@ -656,7 +671,8 @@ const fieldConfig = {
     { key: 'textColor', label: 'Text Color', type: 'color' },
   ],
   'ecom-featured': [
-    { key: 'tag', label: 'Tag', type: 'text' },
+    { key: 'tags', label: 'Tags', type: 'slides', fields: [{ key: 'text', label: 'Tag Text' }, { key: 'color', label: 'Tag Color' }] },
+    { key: 'tagsAlign', label: 'Tags Alignment', type: 'select', options: [{ value: 'left', label: 'Left' }, { value: 'center', label: 'Center' }, { value: 'right', label: 'Right' }] },
     { key: 'title', label: 'Title', type: 'text' },
     { key: 'body', label: 'Body', type: 'textarea' },
     { key: 'imageUrl', label: 'Image URL', type: 'image' },
@@ -872,8 +888,8 @@ const fieldConfig = {
     { key: 'textColor', label: 'Text Color', type: 'color' },
   ],
   'content-update': [
-    { key: 'tag', label: 'Tag', type: 'text' },
-    { key: 'tagColor', label: 'Tag Color', type: 'color' },
+    { key: 'tags', label: 'Tags', type: 'slides', fields: [{ key: 'text', label: 'Tag Text' }, { key: 'color', label: 'Tag Color' }] },
+    { key: 'tagsAlign', label: 'Tags Alignment', type: 'select', options: [{ value: 'left', label: 'Left' }, { value: 'center', label: 'Center' }, { value: 'right', label: 'Right' }] },
     { key: 'readMoreLink', label: 'Read More Link', type: 'text' },
     { key: 'readMoreLabel', label: 'Read More Label', type: 'text' },
     { key: 'backgroundColor', label: 'Background Color', type: 'color' },
@@ -903,8 +919,8 @@ const fieldConfig = {
     { key: 'backgroundColor', label: 'Background Color', type: 'color' },
   ],
   'content-intro': [
-    { key: 'tag', label: 'Tag', type: 'text' },
-    { key: 'tagColor', label: 'Tag Color', type: 'color' },
+    { key: 'tags', label: 'Tags', type: 'slides', fields: [{ key: 'text', label: 'Tag Text' }, { key: 'color', label: 'Tag Color' }] },
+    { key: 'tagsAlign', label: 'Tags Alignment', type: 'select', options: [{ value: 'left', label: 'Left' }, { value: 'center', label: 'Center' }, { value: 'right', label: 'Right' }] },
     { key: 'backgroundColor', label: 'Background Color', type: 'color' },
     { key: 'align', label: 'Align', type: 'select', options: [{ value: 'left', label: 'Left' }, { value: 'center', label: 'Center' }, { value: 'right', label: 'Right' }] },
   ],
