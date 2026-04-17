@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -32,7 +32,7 @@ function SortableElement({ element, isSelected, onSelect, onDelete, onDuplicate,
     opacity: isDragging ? 0.4 : 1,
   };
 
-  const html = renderElementHtmlWithPostProcessing(element);
+  const html = useMemo(() => renderElementHtmlWithPostProcessing(element), [element]);
 
   return (
     <div
