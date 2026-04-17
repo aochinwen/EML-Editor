@@ -1,5 +1,6 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { Trash2, X, ChevronDown, ChevronUp } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 function Field({ label, children, right }) {
   return (
@@ -15,17 +16,29 @@ function Field({ label, children, right }) {
 
 function Input({ value, onChange, type = 'text', placeholder = '' }) {
   const [localVal, setLocalVal] = useState(value ?? '');
+  const lastPropagated = useRef(value ?? '');
+
   useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setLocalVal(value ?? '');
+    if (value !== lastPropagated.current) {
+      setLocalVal(value ?? '');
+      lastPropagated.current = value ?? '';
+    }
   }, [value]);
+
+  useDebounceEffect(localVal, (val) => {
+    if (val !== (value ?? '')) {
+      lastPropagated.current = val;
+      onChange(val);
+    }
+  }, 300);
+
   return (
     <input
       type={type}
       value={localVal}
       onChange={e => setLocalVal(e.target.value)}
-      onBlur={() => onChange(localVal)}
-      onKeyDown={e => { if (e.key === 'Enter') onChange(localVal); }}
+      onBlur={() => { lastPropagated.current = localVal; onChange(localVal); }}
+      onKeyDown={e => { if (e.key === 'Enter') { lastPropagated.current = localVal; onChange(localVal); } }}
       placeholder={placeholder}
       className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
     />
@@ -48,15 +61,27 @@ function ColorInput({ value, onChange }) {
 
 function Textarea({ value, onChange, rows = 3 }) {
   const [localVal, setLocalVal] = useState(value ?? '');
+  const lastPropagated = useRef(value ?? '');
+
   useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setLocalVal(value ?? '');
+    if (value !== lastPropagated.current) {
+      setLocalVal(value ?? '');
+      lastPropagated.current = value ?? '';
+    }
   }, [value]);
+
+  useDebounceEffect(localVal, (val) => {
+    if (val !== (value ?? '')) {
+      lastPropagated.current = val;
+      onChange(val);
+    }
+  }, 300);
+
   return (
     <textarea
       value={localVal}
       onChange={e => setLocalVal(e.target.value)}
-      onBlur={() => onChange(localVal)}
+      onBlur={() => { lastPropagated.current = localVal; onChange(localVal); }}
       rows={rows}
       className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
     />
@@ -126,10 +151,17 @@ function ToggleBtn({ active, onClick, title, children }) {
 function RichTextInput({ fieldKey, props, onChangeMulti, rows = 3 }) {
   const val = props[fieldKey] ?? '';
   const [localVal, setLocalVal] = useState(val);
+
   useEffect(() => {
-        setLocalVal(props[fieldKey] ?? '');
+    setLocalVal(props[fieldKey] ?? '');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props[fieldKey]]);
+
+  useDebounceEffect(localVal, (v) => {
+    if (v !== (props[fieldKey] ?? '')) {
+      onChangeMulti({ [fieldKey]: v });
+    }
+  }, 300);
   const font  = props[`${fieldKey}Font`]   ?? 'sans-serif';
   const rawFontSize = props[`${fieldKey}FontSize`];
   let fontSize = rawFontSize ?? '';
@@ -143,8 +175,14 @@ function RichTextInput({ fieldKey, props, onChangeMulti, rows = 3 }) {
   const align = props[`${fieldKey}Align`]  ?? 'left';
   const renderColor = props[`${fieldKey}Color`] ?? props.textColor ?? '#111827';
 
-  const toggle = (key, current) => onChangeMulti({ [`${fieldKey}${key}`]: !current });
-  const set    = (key, v)       => onChangeMulti({ [`${fieldKey}${key}`]: v });
+  const toggle = (key, current) => {
+    lastPropagated.current = localVal;
+    onChangeMulti({ [`${fieldKey}${key}`]: !current, [fieldKey]: localVal });
+  };
+  const set = (key, v) => {
+    lastPropagated.current = localVal;
+    onChangeMulti({ [`${fieldKey}${key}`]: v, [fieldKey]: localVal });
+  };
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -201,7 +239,7 @@ function RichTextInput({ fieldKey, props, onChangeMulti, rows = 3 }) {
       <textarea
         value={localVal}
         onChange={e => setLocalVal(e.target.value)}
-        onBlur={() => onChangeMulti({ [fieldKey]: localVal })}
+        onBlur={() => { lastPropagated.current = localVal; onChangeMulti({ [fieldKey]: localVal }); }}
         rows={rows}
         style={{
           fontFamily: font,
@@ -1072,6 +1110,23 @@ function parseSpacing(value = '', fallback = '0px') {
   return [parts[0], parts[1], parts[2], parts[3]];
 }
 
+
+function useDebounceEffect(val, callback, delay = 300) {
+  const callbackRef = useRef(callback);
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      callbackRef.current(val);
+    }, delay);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [val, delay]);
+}
+
 const InputSquare = ({ val, idx, icon, update }) => (
   <div className="flex flex-col gap-1 items-center">
     <span className="text-[10px] text-gray-400 font-medium">{icon}</span>
@@ -1230,40 +1285,45 @@ export default function PropertyPanel({ element, onUpdate, onDelete, onClose }) 
           return Object.entries(groups).map(([groupName, groupFields]) => {
             if (groupFields.length === 0) return null;
             return (
-              <div key={groupName} className="mb-4">
-                <div className="flex items-center gap-2 mb-3">
+              <div key={groupName} className="mb-4 p-3 bg-gray-50/50 rounded-xl border border-gray-100">
+                <div className="flex items-center gap-2 mb-3 px-1">
                   <h4 className="text-[11px] font-semibold tracking-wide text-gray-500 uppercase">{groupName}</h4>
-                  <div className="flex-1 h-px bg-gray-100"></div>
+                  <div className="flex-1 h-px bg-gray-200"></div>
                 </div>
-                {groupFields.map(field => {
-                  const hidden = !!element.props[`${field.key}Hidden`];
-                  const hideable = isFieldHideable(field);
-                  return (
-                    <Field
-                      key={field.key}
-                      label={field.label}
-                      right={hideable ? (
-                        <label className="inline-flex items-center gap-1 text-[11px] text-gray-500 select-none">
-                          <input
-                            type="checkbox"
-                            checked={!hidden}
-                            onChange={e => handleChange(`${field.key}Hidden`, !e.target.checked)}
-                            className="w-3.5 h-3.5 accent-indigo-600"
-                          />
-                          Show
-                        </label>
-                      ) : null}
-                    >
-                      {renderField(field)}
-                    </Field>
-                  );
-                })}
+                <div className="flex flex-col gap-3">
+                  {groupFields.map(field => {
+                    const hidden = !!element.props[`${field.key}Hidden`];
+                    const hideable = isFieldHideable(field);
+                    return (
+                      <Field
+                        key={field.key}
+                        label={field.label}
+                        right={hideable ? (
+                          <label className="inline-flex items-center gap-1 text-[11px] text-gray-500 select-none">
+                            <input
+                              type="checkbox"
+                              checked={!hidden}
+                              onChange={e => handleChange(`${field.key}Hidden`, !e.target.checked)}
+                              className="w-3.5 h-3.5 accent-indigo-600"
+                            />
+                            Show
+                          </label>
+                        ) : null}
+                      >
+                        {renderField(field)}
+                      </Field>
+                    );
+                  })}
+                </div>
               </div>
             );
           });
         })()}
-        <div className="mt-4 pt-3 border-t border-gray-100">
-          <p className="text-[11px] font-semibold tracking-wide text-gray-500 uppercase mb-2">Element Spacing</p>
+        <div className="mt-4 mb-4 p-3 bg-gray-50/50 rounded-xl border border-gray-100">
+          <div className="flex items-center gap-2 mb-3 px-1">
+            <h4 className="text-[11px] font-semibold tracking-wide text-gray-500 uppercase">Element Spacing</h4>
+            <div className="flex-1 h-px bg-gray-200"></div>
+          </div>
           <SpacingEditor
             label="Padding (px)"
             value={element.props.elementPadding || ''}
