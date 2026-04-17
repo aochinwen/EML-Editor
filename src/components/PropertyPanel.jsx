@@ -151,6 +151,7 @@ function ToggleBtn({ active, onClick, title, children }) {
 function RichTextInput({ fieldKey, props, onChangeMulti, rows = 3 }) {
   const val = props[fieldKey] ?? '';
   const [localVal, setLocalVal] = useState(val);
+  const lastPropagated = useRef(val);
 
   useEffect(() => {
     setLocalVal(props[fieldKey] ?? '');

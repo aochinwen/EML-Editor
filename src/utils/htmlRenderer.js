@@ -1118,6 +1118,17 @@ export function renderElementHtml(element) {
   </td></tr>
 </table>`;
 
+    case 'footer-logo-links':
+      return `<table width="100%" cellpadding="0" cellspacing="0" style="background:${props.backgroundColor};border-top:1px solid #e5e7eb">
+  <tr><td align="center" style="padding:24px 40px">
+    <img src="${props.logoUrl}" alt="Logo" style="max-height:36px;display:block;margin:0 auto 12px"/>
+    <p style="margin:0 0 12px">
+      ${(props.links || []).map(l => `<a href="${l.href}" style="color:${props.textColor};font-size:13px;font-family:sans-serif;margin:0 8px;text-decoration:none">${l.label}</a>`).join('')}
+    </p>
+    <p style="margin:0;color:${props.textColor};font-size:12px;font-family:sans-serif">${props.address}</p>
+  </td></tr>
+</table>`;
+
     default:
       return `<table width="100%"><tr><td style="padding:20px;font-family:sans-serif;color:#6b7280;text-align:center">[Unknown element: ${type}]</td></tr></table>`;
   }
