@@ -1,8 +1,93 @@
 import { useState } from 'react';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, GripVertical } from 'lucide-react';
 import { CATEGORIES, ELEMENT_TEMPLATES } from '../data/elements';
 import ThumbnailPreview from './ElementThumbnail';
 import { THEME_LIST } from '../data/themes';
+
+function DraggableElement({ tmpl, onAdd }) {
+  const [isDragging, setIsDragging] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleDragStart = (e) => {
+    setIsDragging(true);
+    e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.setData('application/json', JSON.stringify({
+      type: tmpl.id,
+      props: { ...tmpl.defaults }
+    }));
+    // Set a custom drag image if needed
+    e.dataTransfer.setDragImage(e.currentTarget, e.currentTarget.offsetWidth / 2, 20);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
+
+  const handleClick = () => {
+    onAdd({ type: tmpl.id, props: { ...tmpl.defaults } });
+  };
+
+  return (
+    <div
+      draggable
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onClick={handleClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="group cursor-move rounded-xl overflow-hidden transition-all duration-300"
+      style={{
+        border: isDragging ? '1px solid #6366f1' : '1px solid #2a2d3e',
+        boxShadow: isDragging ? '0 8px 24px rgba(99, 102, 241, 0.35)' : isHovered ? '0 4px 12px rgba(0, 0, 0, 0.3)' : 'none',
+        transform: isHovered && !isDragging ? 'translateY(-4px)' : isDragging ? 'rotate(2deg) scale(1.02)' : 'translateY(0)',
+        opacity: isDragging ? 0.9 : 1,
+      }}
+    >
+      {/* Drag handle indicator - slides out on hover */}
+      <div
+        className="flex items-center justify-center gap-1 py-1 transition-all duration-300 overflow-hidden"
+        style={{
+          background: isHovered ? '#2d3250' : '#1e2030',
+          borderBottom: '1px solid #2a2d3e',
+          maxHeight: isHovered ? '28px' : '0px',
+          opacity: isHovered ? 1 : 0,
+          transform: isHovered ? 'translateY(0)' : 'translateY(-100%)',
+        }}
+      >
+        <GripVertical size={12} style={{ color: '#6366f1' }} />
+        <span className="text-[10px] font-medium" style={{ color: '#6366f1' }}>
+          Drag to canvas
+        </span>
+      </div>
+
+      {/* Thumbnail area */}
+      <div
+        className="w-full overflow-hidden"
+        style={{ background: '#252840', padding: 8 }}
+      >
+        <div
+          className="rounded-lg overflow-hidden transition-transform duration-300"
+          style={{
+            background: '#fff',
+            transform: isHovered && !isDragging ? 'scale(1.02)' : 'scale(1)',
+          }}
+        >
+          <ThumbnailPreview thumbnail={tmpl.thumbnail} label={tmpl.label} />
+        </div>
+      </div>
+
+      {/* Label */}
+      <div
+        className="px-2.5 py-2 transition-colors"
+        style={{ background: '#1e2030' }}
+      >
+        <p className="text-xs font-medium leading-tight" style={{ color: '#d1d5db' }}>
+          {tmpl.label}
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export default function ElementsSidebar({ onAdd, activeTheme, onThemeChange }) {
   const [activeCategory, setActiveCategory] = useState('header');
@@ -93,39 +178,11 @@ export default function ElementsSidebar({ onAdd, activeTheme, onThemeChange }) {
         {/* Grid */}
         <div className="p-3 grid grid-cols-2 gap-3">
           {templates.map(tmpl => (
-            <div
+            <DraggableElement
               key={tmpl.id}
-              className="group cursor-pointer rounded-xl overflow-hidden transition-all"
-              style={{ border: '1px solid #2a2d3e' }}
-              onClick={() => onAdd({ type: tmpl.id, props: { ...tmpl.defaults } })}
-              onMouseEnter={e => {
-                e.currentTarget.style.border = '1px solid #6366f1';
-                e.currentTarget.style.boxShadow = '0 0 0 1px #6366f1';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.border = '1px solid #2a2d3e';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              {/* Thumbnail area */}
-              <div
-                className="w-full overflow-hidden"
-                style={{ background: '#252840', padding: 8 }}
-              >
-                <div className="rounded-lg overflow-hidden" style={{ background: '#fff' }}>
-                  <ThumbnailPreview thumbnail={tmpl.thumbnail} label={tmpl.label} />
-                </div>
-              </div>
-              {/* Label */}
-              <div
-                className="px-2.5 py-2 transition-colors"
-                style={{ background: '#1e2030' }}
-              >
-                <p className="text-xs font-medium leading-tight" style={{ color: '#d1d5db' }}>
-                  {tmpl.label}
-                </p>
-              </div>
-            </div>
+              tmpl={tmpl}
+              onAdd={onAdd}
+            />
           ))}
         </div>
       </div>

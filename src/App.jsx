@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Eye, Download, RotateCcw, Mail, ChevronLeft, ChevronRight, Upload, Save, FolderOpen, Trash2, Settings } from 'lucide-react';
+import { Eye, Download, RotateCcw, Mail, ChevronLeft, ChevronRight, Upload, Save, FolderOpen, Trash2, Settings, Menu, FileJson, FileText } from 'lucide-react';
 import ElementsSidebar from './components/ElementsSidebar';
 import Canvas from './components/Canvas';
 import PropertyPanel from './components/PropertyPanel';
@@ -74,6 +74,7 @@ function App() {
   const [autosaveStatus, setAutosaveStatus] = useState('Not saved yet');
   const [activeTheme, setActiveTheme] = useState('light');
   const [showGlobalSettings, setShowGlobalSettings] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const selectedElement = elements.find(e => e.id === selectedId) || null;
 
@@ -132,10 +133,17 @@ function App() {
     });
   }, [elements, selectedId, emailMeta, leftPanelCollapsed, rightPanelCollapsed, activeTheme, sessionRestored]);
 
-  const handleAdd = useCallback((template) => {
+  const handleAdd = useCallback((template, insertIndex = null) => {
     let el = { ...template, id: `el-${nextId++}` };
     el = applyThemeToElement(el, activeTheme);
     setElements(prev => {
+      // If insertIndex is provided, insert at that position
+      if (insertIndex !== null && insertIndex >= 0 && insertIndex <= prev.length) {
+        const next = [...prev];
+        next.splice(insertIndex, 0, el);
+        return next;
+      }
+      // Otherwise use the default behavior (after selected element or at end)
       if (selectedId) {
         const idx = prev.findIndex(e => e.id === selectedId);
         if (idx !== -1) {
@@ -387,36 +395,6 @@ function App() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={handleSaveSession}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border transition-colors font-medium"
-            style={{ border: '1px solid #3d4060', color: '#d1d5db', background: 'transparent' }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#252840'; e.currentTarget.style.color = '#fff'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#d1d5db'; }}
-            title="Save session"
-          >
-            <Save size={14} /> Save session
-          </button>
-          <button
-            onClick={handlePickSession}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border transition-colors font-medium"
-            style={{ border: '1px solid #3d4060', color: '#d1d5db', background: 'transparent' }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#252840'; e.currentTarget.style.color = '#fff'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#d1d5db'; }}
-            title="Load session"
-          >
-            <FolderOpen size={14} /> Load session
-          </button>
-          <button
-            onClick={handlePickEml}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border transition-colors font-medium"
-            style={{ border: '1px solid #3d4060', color: '#d1d5db', background: 'transparent' }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#252840'; e.currentTarget.style.color = '#fff'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#d1d5db'; }}
-            title="Load .eml"
-          >
-            <Upload size={14} /> Load .eml
-          </button>
-          <button
             onClick={() => setLeftPanelCollapsed(prev => !prev)}
             className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg border transition-colors"
             style={{ border: '1px solid #3d4060', color: '#cbd5e1', background: 'transparent' }}
@@ -434,16 +412,78 @@ function App() {
             Right
             {rightPanelCollapsed ? <ChevronLeft size={13} /> : <ChevronRight size={13} />}
           </button>
-          <button
-            onClick={() => setShowGlobalSettings(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border transition-colors font-medium"
-            style={{ border: '1px solid #3d4060', color: '#d1d5db', background: 'transparent' }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#252840'; e.currentTarget.style.color = '#fff'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#d1d5db'; }}
-            title="Global settings"
-          >
-            <Settings size={14} /> Settings
-          </button>
+
+          {/* Consolidated Menu Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border transition-colors font-medium"
+              style={{ border: '1px solid #3d4060', color: '#d1d5db', background: 'transparent' }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#252840'; e.currentTarget.style.color = '#fff'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#d1d5db'; }}
+              title="Menu"
+            >
+              <Menu size={14} /> Menu
+            </button>
+            {menuOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setMenuOpen(false)}
+                />
+                <div
+                  className="absolute right-0 top-full mt-2 w-56 rounded-xl border shadow-2xl z-50 py-2"
+                  style={{ background: '#1e2030', borderColor: '#3d4060' }}
+                >
+                  <div className="px-3 py-2 border-b border-gray-700/50 mb-1">
+                    <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#6b7280' }}>Session</p>
+                  </div>
+                  <button
+                    onClick={() => { handleSaveSession(); setMenuOpen(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left"
+                    style={{ color: '#d1d5db' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#252840'; e.currentTarget.style.color = '#fff'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#d1d5db'; }}
+                  >
+                    <Save size={16} /> Save session
+                  </button>
+                  <button
+                    onClick={() => { handlePickSession(); setMenuOpen(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left"
+                    style={{ color: '#d1d5db' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#252840'; e.currentTarget.style.color = '#fff'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#d1d5db'; }}
+                  >
+                    <FolderOpen size={16} /> Load session
+                  </button>
+                  <div className="px-3 py-2 border-b border-gray-700/50 mt-2 mb-1">
+                    <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#6b7280' }}>Import / Export</p>
+                  </div>
+                  <button
+                    onClick={() => { handlePickEml(); setMenuOpen(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left"
+                    style={{ color: '#d1d5db' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#252840'; e.currentTarget.style.color = '#fff'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#d1d5db'; }}
+                  >
+                    <FileText size={16} /> Load .eml file
+                  </button>
+                  <div className="px-3 py-2 border-b border-gray-700/50 mt-2 mb-1">
+                    <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#6b7280' }}>Settings</p>
+                  </div>
+                  <button
+                    onClick={() => { setShowGlobalSettings(true); setMenuOpen(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left"
+                    style={{ color: '#d1d5db' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#252840'; e.currentTarget.style.color = '#fff'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#d1d5db'; }}
+                  >
+                    <Settings size={16} /> Global settings
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
           <button
             onClick={handleClear}
             disabled={elements.length === 0}
@@ -611,6 +651,7 @@ function App() {
               onReorder={handleReorder}
               onDelete={handleDelete}
               onDuplicate={handleDuplicate}
+              onAdd={handleAdd}
               emailMeta={emailMeta}
             />
           </div>

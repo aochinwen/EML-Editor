@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useCallback, useMemo, useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -15,6 +15,109 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Trash2, Copy, ChevronUp, ChevronDown } from 'lucide-react';
 import { renderElementHtmlWithPostProcessing } from '../utils/htmlRenderer';
+
+function DroppableElement({ element, index, isSelected, onSelect, onDelete, onDuplicate, onMoveUp, onMoveDown, onAdd, totalElements }) {
+  const [dropPosition, setDropPosition] = useState(null); // 'before' | 'after' | null
+
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mouseY = e.clientY;
+    const elementCenter = rect.top + rect.height / 2;
+
+    // Determine if mouse is in top half (before) or bottom half (after)
+    const position = mouseY < elementCenter ? 'before' : 'after';
+    setDropPosition(position);
+  }, []);
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault();
+    setDropPosition(null);
+  }, []);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      const data = e.dataTransfer.getData('application/json');
+      if (data) {
+        const elementData = JSON.parse(data);
+        // Calculate insert index based on drop position
+        const insertIndex = dropPosition === 'before' ? index : index + 1;
+        onAdd?.(elementData, insertIndex);
+      }
+    } catch (err) {
+      console.error('Failed to parse dropped element:', err);
+    }
+    setDropPosition(null);
+  }, [dropPosition, index, onAdd]);
+
+  return (
+    <div
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className="relative"
+    >
+      {/* Drop indicator - before element */}
+      {dropPosition === 'before' && (
+        <div
+          className="absolute -top-2 left-0 right-0 z-10 pointer-events-none"
+          style={{
+            height: '4px',
+            background: '#6366f1',
+            borderRadius: '2px',
+            boxShadow: '0 0 8px rgba(99, 102, 241, 0.5)',
+          }}
+        >
+          <div
+            className="absolute -left-1 -top-1 w-3 h-3 rounded-full"
+            style={{ background: '#6366f1' }}
+          />
+          <div
+            className="absolute -right-1 -top-1 w-3 h-3 rounded-full"
+            style={{ background: '#6366f1' }}
+          />
+        </div>
+      )}
+
+      <SortableElement
+        element={element}
+        isSelected={isSelected}
+        onSelect={onSelect}
+        onDelete={onDelete}
+        onDuplicate={onDuplicate}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+      />
+
+      {/* Drop indicator - after element (only for last element) */}
+      {dropPosition === 'after' && index === totalElements - 1 && (
+        <div
+          className="absolute -bottom-2 left-0 right-0 z-10 pointer-events-none"
+          style={{
+            height: '4px',
+            background: '#6366f1',
+            borderRadius: '2px',
+            boxShadow: '0 0 8px rgba(99, 102, 241, 0.5)',
+          }}
+        >
+          <div
+            className="absolute -left-1 -top-1 w-3 h-3 rounded-full"
+            style={{ background: '#6366f1' }}
+          />
+          <div
+            className="absolute -right-1 -top-1 w-3 h-3 rounded-full"
+            style={{ background: '#6366f1' }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
 
 function SortableElement({ element, isSelected, onSelect, onDelete, onDuplicate, onMoveUp, onMoveDown }) {
   const {
@@ -105,10 +208,39 @@ function SortableElement({ element, isSelected, onSelect, onDelete, onDuplicate,
   );
 }
 
-export default function Canvas({ elements, selectedId, onSelect, onReorder, onDelete, onDuplicate, emailMeta }) {
+export default function Canvas({ elements, selectedId, onSelect, onReorder, onDelete, onDuplicate, onAdd, emailMeta }) {
+  const [isDragOver, setIsDragOver] = useState(false);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
+
+  // Handle empty canvas drop
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+
+    try {
+      const data = e.dataTransfer.getData('application/json');
+      if (data) {
+        const elementData = JSON.parse(data);
+        onAdd?.(elementData);
+      }
+    } catch (err) {
+      console.error('Failed to parse dropped element:', err);
+    }
+  }, [onAdd]);
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
@@ -169,15 +301,39 @@ export default function Canvas({ elements, selectedId, onSelect, onReorder, onDe
       <div
         className="h-full flex flex-col items-center justify-center text-center px-8"
         onClick={() => onSelect(null)}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        style={{
+          background: isDragOver ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+          transition: 'background 0.2s ease',
+        }}
       >
-        <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mb-4">
-          <svg width="28" height="28" fill="none" stroke="#6366f1" strokeWidth="1.5" viewBox="0 0 24 24">
+        <div
+          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300"
+          style={{
+            background: isDragOver ? '#6366f1' : '#e0e7ff',
+            transform: isDragOver ? 'scale(1.1)' : 'scale(1)',
+          }}
+        >
+          <svg
+            width="28"
+            height="28"
+            fill="none"
+            stroke={isDragOver ? '#ffffff' : '#6366f1'}
+            strokeWidth="1.5"
+            viewBox="0 0 24 24"
+          >
             <path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
-        <h3 className="font-semibold text-gray-700 text-lg mb-1">Start building your email</h3>
+        <h3 className="font-semibold text-gray-700 text-lg mb-1">
+          {isDragOver ? 'Drop element here' : 'Start building your email'}
+        </h3>
         <p className="text-sm text-gray-400 max-w-xs">
-          Select elements from the left panel and click to add them to your email canvas
+          {isDragOver
+            ? 'Release to add this element to your email'
+            : 'Drag elements from the sidebar or click to add them to your canvas'}
         </p>
       </div>
     );
@@ -187,6 +343,13 @@ export default function Canvas({ elements, selectedId, onSelect, onReorder, onDe
     <div
       className="min-h-full py-8 px-4 flex justify-center"
       onClick={() => onSelect(null)}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      style={{
+        background: isDragOver ? 'rgba(99, 102, 241, 0.05)' : 'transparent',
+        transition: 'background 0.2s ease',
+      }}
     >
       <div
         className="w-full shadow-md rounded-lg overflow-hidden transition-all duration-300"
@@ -209,15 +372,18 @@ export default function Canvas({ elements, selectedId, onSelect, onReorder, onDe
           >
             <div className="relative" style={{ paddingTop: 4 }}>
               {elements.map((el, index) => (
-                <SortableElement
+                <DroppableElement
                   key={el.id}
                   element={el}
+                  index={index}
                   isSelected={selectedId === el.id}
                   onSelect={onSelect}
                   onDelete={() => onDelete(el.id)}
                   onDuplicate={() => onDuplicate(el.id)}
                   onMoveUp={() => handleMoveUp(index)}
                   onMoveDown={() => handleMoveDown(index)}
+                  onAdd={onAdd}
+                  totalElements={elements.length}
                 />
               ))}
             </div>
