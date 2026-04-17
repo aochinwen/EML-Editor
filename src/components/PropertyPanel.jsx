@@ -1,5 +1,5 @@
 import { Trash2, X, ChevronDown, ChevronUp } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 function Field({ label, children, right }) {
   return (
@@ -14,11 +14,18 @@ function Field({ label, children, right }) {
 }
 
 function Input({ value, onChange, type = 'text', placeholder = '' }) {
+  const [localVal, setLocalVal] = useState(value ?? '');
+  useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setLocalVal(value ?? '');
+  }, [value]);
   return (
     <input
       type={type}
-      value={value ?? ''}
-      onChange={e => onChange(e.target.value)}
+      value={localVal}
+      onChange={e => setLocalVal(e.target.value)}
+      onBlur={() => onChange(localVal)}
+      onKeyDown={e => { if (e.key === 'Enter') onChange(localVal); }}
       placeholder={placeholder}
       className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
     />
@@ -40,10 +47,16 @@ function ColorInput({ value, onChange }) {
 }
 
 function Textarea({ value, onChange, rows = 3 }) {
+  const [localVal, setLocalVal] = useState(value ?? '');
+  useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setLocalVal(value ?? '');
+  }, [value]);
   return (
     <textarea
-      value={value ?? ''}
-      onChange={e => onChange(e.target.value)}
+      value={localVal}
+      onChange={e => setLocalVal(e.target.value)}
+      onBlur={() => onChange(localVal)}
       rows={rows}
       className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
     />
@@ -111,7 +124,12 @@ function ToggleBtn({ active, onClick, title, children }) {
 }
 
 function RichTextInput({ fieldKey, props, onChangeMulti, rows = 3 }) {
-  const val   = props[fieldKey] ?? '';
+  const val = props[fieldKey] ?? '';
+  const [localVal, setLocalVal] = useState(val);
+  useEffect(() => {
+        setLocalVal(props[fieldKey] ?? '');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props[fieldKey]]);
   const font  = props[`${fieldKey}Font`]   ?? 'sans-serif';
   const rawFontSize = props[`${fieldKey}FontSize`];
   let fontSize = rawFontSize ?? '';
@@ -181,8 +199,9 @@ function RichTextInput({ fieldKey, props, onChangeMulti, rows = 3 }) {
 
       {/* Text preview + editor */}
       <textarea
-        value={val}
-        onChange={e => onChangeMulti({ [fieldKey]: e.target.value })}
+        value={localVal}
+        onChange={e => setLocalVal(e.target.value)}
+        onBlur={() => onChangeMulti({ [fieldKey]: localVal })}
         rows={rows}
         style={{
           fontFamily: font,
@@ -624,13 +643,7 @@ const fieldConfig = {
     { key: 'useBackgroundColor', label: 'Background Fill', type: 'boolean', checkboxLabel: 'Enable background color' },
     { key: 'backgroundColor', label: 'Background', type: 'color' },
   ],
-  'image-panorama': [
-    { key: 'imageUrl', label: 'Image URL', type: 'image' },
-    { key: 'alt', label: 'Alt Text', type: 'text' },
-    { key: 'link', label: 'Link URL', type: 'text' },
-    { key: 'useBackgroundColor', label: 'Background Fill', type: 'boolean', checkboxLabel: 'Enable background color' },
-    { key: 'backgroundColor', label: 'Background Color', type: 'color' },
-  ],
+
   'cta-app-store': [
     { key: 'title', label: 'Title', type: 'text' },
     { key: 'body', label: 'Body', type: 'textarea' },
@@ -1059,6 +1072,18 @@ function parseSpacing(value = '', fallback = '0px') {
   return [parts[0], parts[1], parts[2], parts[3]];
 }
 
+const InputSquare = ({ val, idx, icon, update }) => (
+  <div className="flex flex-col gap-1 items-center">
+    <span className="text-[10px] text-gray-400 font-medium">{icon}</span>
+    <input
+      type="text"
+      value={val.replace('px', '')}
+      onChange={e => update(idx, e.target.value ? `${e.target.value}px` : '')}
+      className="w-full text-center border border-gray-200 rounded px-1 py-1 text-xs focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition-shadow"
+    />
+  </div>
+);
+
 function SpacingEditor({ value, onChange, label, fallback = '0px' }) {
   const [top, right, bottom, left] = parseSpacing(value, fallback);
 
@@ -1076,34 +1101,22 @@ function SpacingEditor({ value, onChange, label, fallback = '0px' }) {
     }
   };
 
-  const InputSquare = ({ val, idx, icon }) => (
-    <div className="flex flex-col gap-1 items-center">
-      <span className="text-[10px] text-gray-400 font-medium">{icon}</span>
-      <input
-        type="text"
-        value={val.replace('px', '')}
-        onChange={e => update(idx, e.target.value ? `${e.target.value}px` : '')}
-        className="w-full text-center border border-gray-200 rounded px-1 py-1 text-xs focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition-shadow"
-      />
-    </div>
-  );
 
   return (
     <div className="mb-4">
       <label className="block text-[11px] font-semibold text-gray-600 mb-2">{label}</label>
       <div className="grid grid-cols-4 gap-2">
-        <InputSquare val={top} idx={0} icon="Top" />
-        <InputSquare val={bottom} idx={2} icon="Bottom" />
-        <InputSquare val={left} idx={3} icon="Left" />
-        <InputSquare val={right} idx={1} icon="Right" />
+        <InputSquare val={top} idx={0} icon="Top" update={update} />
+        <InputSquare val={bottom} idx={2} icon="Bottom" update={update} />
+        <InputSquare val={left} idx={3} icon="Left" update={update} />
+        <InputSquare val={right} idx={1} icon="Right" update={update} />
       </div>
     </div>
   );
 }
 
 export default function PropertyPanel({ element, onUpdate, onDelete, onClose }) {
-  const [collapsed, setCollapsed] = useState({});
-  if (!element) {
+    if (!element) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-gray-400 text-sm px-6 text-center">
         <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
@@ -1190,33 +1203,65 @@ export default function PropertyPanel({ element, onUpdate, onDelete, onClose }) 
         </div>
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-3">
-        {fields.length === 0 && (
-          <p className="text-xs text-gray-400">No editable properties for this element.</p>
-        )}
-        {fields.map(field => {
-          const hidden = !!element.props[`${field.key}Hidden`];
-          const hideable = isFieldHideable(field);
-          return (
-            <Field
-              key={field.key}
-              label={field.label}
-              right={hideable ? (
-                <label className="inline-flex items-center gap-1 text-[11px] text-gray-500 select-none">
-                  <input
-                    type="checkbox"
-                    checked={!hidden}
-                    onChange={e => handleChange(`${field.key}Hidden`, !e.target.checked)}
-                    className="w-3.5 h-3.5 accent-indigo-600"
-                  />
-                  Show
-                </label>
-              ) : null}
-            >
-              {renderField(field)}
-            </Field>
-          );
-        })}
 
+        {(() => {
+          if (fields.length === 0) return <p className="text-xs text-gray-400">No editable properties for this element.</p>;
+
+          const groups = {
+            Content: [],
+            Appearance: [],
+            Actions: [],
+            Advanced: [],
+          };
+
+          fields.forEach(field => {
+            const key = field.key.toLowerCase();
+            if (field.type === 'color' || field.type === 'boolean' || key.includes('align') || key.includes('width') || key.includes('height') || key.includes('radius') || key.includes('border')) {
+              groups.Appearance.push(field);
+            } else if (key.includes('link') || key.includes('button') || key.includes('cta') || field.type === 'buttongroup') {
+              groups.Actions.push(field);
+            } else if (field.type === 'text' || field.type === 'textarea' || field.type === 'richtext' || field.type === 'image' || field.type === 'stringlist' || field.type === 'slides' || field.type === 'number') {
+              groups.Content.push(field);
+            } else {
+              groups.Advanced.push(field);
+            }
+          });
+
+          return Object.entries(groups).map(([groupName, groupFields]) => {
+            if (groupFields.length === 0) return null;
+            return (
+              <div key={groupName} className="mb-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <h4 className="text-[11px] font-semibold tracking-wide text-gray-500 uppercase">{groupName}</h4>
+                  <div className="flex-1 h-px bg-gray-100"></div>
+                </div>
+                {groupFields.map(field => {
+                  const hidden = !!element.props[`${field.key}Hidden`];
+                  const hideable = isFieldHideable(field);
+                  return (
+                    <Field
+                      key={field.key}
+                      label={field.label}
+                      right={hideable ? (
+                        <label className="inline-flex items-center gap-1 text-[11px] text-gray-500 select-none">
+                          <input
+                            type="checkbox"
+                            checked={!hidden}
+                            onChange={e => handleChange(`${field.key}Hidden`, !e.target.checked)}
+                            className="w-3.5 h-3.5 accent-indigo-600"
+                          />
+                          Show
+                        </label>
+                      ) : null}
+                    >
+                      {renderField(field)}
+                    </Field>
+                  );
+                })}
+              </div>
+            );
+          });
+        })()}
         <div className="mt-4 pt-3 border-t border-gray-100">
           <p className="text-[11px] font-semibold tracking-wide text-gray-500 uppercase mb-2">Element Spacing</p>
           <SpacingEditor

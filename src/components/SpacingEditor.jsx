@@ -9,6 +9,18 @@ function parseSpacing(value = '', fallback = '0px') {
   return [parts[0], parts[1], parts[2], parts[3]];
 }
 
+const InputSquare = ({ val, idx, icon, update }) => (
+  <div className="flex flex-col gap-1 items-center">
+    <span className="text-[10px] text-gray-400 font-medium">{icon}</span>
+    <input
+      type="text"
+      value={val.replace('px', '')}
+      onChange={e => update(idx, e.target.value ? `${e.target.value}px` : '')}
+      className="w-full text-center border border-gray-200 rounded px-1 py-1 text-xs focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition-shadow"
+    />
+  </div>
+);
+
 export default function SpacingEditor({ value, onChange, label, fallback = '0px' }) {
   const [top, right, bottom, left] = parseSpacing(value, fallback);
 
@@ -27,26 +39,15 @@ export default function SpacingEditor({ value, onChange, label, fallback = '0px'
     }
   };
 
-  const Input = ({ val, idx, icon }) => (
-    <div className="flex flex-col gap-1 items-center">
-      <span className="text-[10px] text-gray-400 font-medium">{icon}</span>
-      <input
-        type="text"
-        value={val.replace('px', '')}
-        onChange={e => update(idx, e.target.value ? `${e.target.value}px` : '')}
-        className="w-full text-center border border-gray-200 rounded px-1 py-1 text-xs focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition-shadow"
-      />
-    </div>
-  );
 
   return (
     <div className="mb-4">
       <label className="block text-[11px] font-semibold text-gray-600 mb-2">{label}</label>
       <div className="grid grid-cols-4 gap-2">
-        <Input val={top} idx={0} icon="Top" />
-        <Input val={bottom} idx={2} icon="Bottom" />
-        <Input val={left} idx={3} icon="Left" />
-        <Input val={right} idx={1} icon="Right" />
+        <InputSquare val={top} idx={0} icon="Top" update={update} />
+        <InputSquare val={bottom} idx={2} icon="Bottom" update={update} />
+        <InputSquare val={left} idx={3} icon="Left" update={update} />
+        <InputSquare val={right} idx={1} icon="Right" update={update} />
       </div>
     </div>
   );

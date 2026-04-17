@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -121,19 +121,19 @@ export default function Canvas({ elements, selectedId, onSelect, onReorder, onDe
     }, 50);
   };
 
-  const handleMoveUp = (index) => {
+  const handleMoveUp = useCallback((index) => {
     if (index === 0) return;
     const id = elements[index].id;
     onReorder(arrayMove(elements, index, index - 1));
     scrollToElement(id);
-  };
+  }, [elements, onReorder]);
 
-  const handleMoveDown = (index) => {
+  const handleMoveDown = useCallback((index) => {
     if (index === elements.length - 1) return;
     const id = elements[index].id;
     onReorder(arrayMove(elements, index, index + 1));
     scrollToElement(id);
-  };
+  }, [elements, onReorder]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -158,7 +158,7 @@ export default function Canvas({ elements, selectedId, onSelect, onReorder, onDe
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [elements, selectedId, onReorder]);
+  }, [elements, selectedId, onReorder, handleMoveUp, handleMoveDown]);
 
   if (elements.length === 0) {
     return (

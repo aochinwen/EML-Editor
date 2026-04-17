@@ -39,7 +39,7 @@ async function idbGet(key) {
             result = lsItem;
             idbSet(key, lsItem).catch(() => {});
           }
-        } catch (e) {}
+        } catch { /* empty */ }
       }
       resolve(result);
     };
@@ -52,7 +52,7 @@ async function idbSet(key, val) {
   return new Promise((resolve, reject) => {
     const tx = db.transaction('keyval', 'readwrite');
     const store = tx.objectStore('keyval');
-    const request = store.put(val, key);
+    store.put(val, key);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
@@ -63,7 +63,7 @@ async function idbDel(key) {
   return new Promise((resolve, reject) => {
     const tx = db.transaction('keyval', 'readwrite');
     const store = tx.objectStore('keyval');
-    const request = store.delete(key);
+    store.delete(key);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
@@ -170,7 +170,7 @@ export async function saveSessionToStorage(state) {
 export async function clearSessionFromStorage() {
   try {
     await idbDel(SESSION_STORAGE_KEY);
-  } catch (e) {
+  } catch {
     // ignore
   }
 }

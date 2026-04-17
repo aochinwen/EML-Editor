@@ -766,7 +766,6 @@ function ThumbnailPreview({ thumbnail }) {
   );
 
   const [bg, Inner] = entry;
-  const isGradient = bg.startsWith('linear');
 
   return (
     <div
