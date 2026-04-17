@@ -2,14 +2,19 @@
 import { Trash2, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
-function Field({ label, children, right }) {
+function Field({ label, children, right, disabled }) {
   return (
     <div className="mb-3">
       <div className="flex items-center justify-between mb-1 gap-2">
-        <label className="block text-xs font-medium text-gray-500">{label}</label>
+        <label className={`block text-xs font-medium ${disabled ? 'text-gray-300' : 'text-gray-500'} transition-colors`}>{label}</label>
         {right}
       </div>
-      {children}
+      <div
+        className="transition-opacity duration-200"
+        style={disabled ? { opacity: 0.35, pointerEvents: 'none', filter: 'grayscale(0.6)' } : undefined}
+      >
+        {children}
+      </div>
     </div>
   );
 }
@@ -243,13 +248,9 @@ function RichTextInput({ fieldKey, props, onChangeMulti, rows = 3 }) {
         onBlur={() => { lastPropagated.current = localVal; onChangeMulti({ [fieldKey]: localVal }); }}
         rows={rows}
         style={{
-          fontFamily: font,
-          fontSize: fontSize || 'inherit',
           fontWeight: bold ? 'bold' : 'normal',
           fontStyle:  italic ? 'italic' : 'normal',
           textDecoration: [underline && 'underline', strike && 'line-through'].filter(Boolean).join(' ') || 'none',
-          textAlign: align,
-          color: '#000000',
         }}
         className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
       />
@@ -1309,6 +1310,7 @@ export default function PropertyPanel({ element, onUpdate, onDelete, onClose }) 
                       <Field
                         key={field.key}
                         label={field.label}
+                        disabled={hideable && hidden}
                         right={hideable ? (
                           <label className="inline-flex items-center gap-1 text-[11px] text-gray-500 select-none">
                             <input
