@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Eye, Download, RotateCcw, Mail, ChevronLeft, ChevronRight, Upload, Save, FolderOpen, Trash2, Settings, Menu, FileJson, FileText } from 'lucide-react';
+import { Eye, Download, RotateCcw, Mail, ChevronLeft, ChevronRight, Upload, Save, FolderOpen, Trash2, Settings, Menu, FileJson, FileText, FilePlus } from 'lucide-react';
 import ElementsSidebar from './components/ElementsSidebar';
 import Canvas from './components/Canvas';
 import PropertyPanel from './components/PropertyPanel';
@@ -207,6 +207,21 @@ function App() {
       setElements([]);
       setSelectedId(null);
     }
+  };
+
+  const handleNewProject = async () => {
+    if (elements.length > 0 || emailMeta.subject || emailMeta.from || emailMeta.to) {
+      if (!window.confirm('Start a new email? Current work will be discarded.')) {
+        return;
+      }
+    }
+    setElements([]);
+    setSelectedId(null);
+    setEmailMeta(defaultMeta);
+    nextId = 1;
+    await clearSessionFromStorage();
+    setDraftSummary(null);
+    setAutosaveStatus('New email');
   };
 
   const handlePickEml = () => {
@@ -438,6 +453,15 @@ function App() {
                   <div className="px-3 py-2 border-b border-gray-700/50 mb-1">
                     <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#6b7280' }}>Session</p>
                   </div>
+                  <button
+                    onClick={() => { handleNewProject(); setMenuOpen(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left"
+                    style={{ color: '#d1d5db' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#252840'; e.currentTarget.style.color = '#fff'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#d1d5db'; }}
+                  >
+                    <FilePlus size={16} /> New email
+                  </button>
                   <button
                     onClick={() => { handleSaveSession(); setMenuOpen(false); }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left"

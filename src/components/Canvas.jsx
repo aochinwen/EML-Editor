@@ -146,55 +146,62 @@ function SortableElement({ element, isSelected, onSelect, onDelete, onDuplicate,
       id={`element-${element.id}`}
       ref={setNodeRef}
       style={style}
-      className={`relative group transition-all ${
+      className={`relative group transition-all duration-200 ${
         isSelected
-          ? 'ring-2 ring-indigo-500 ring-offset-1'
-          : 'hover:ring-1 hover:ring-indigo-300'
+          ? 'bg-indigo-50/50'
+          : 'hover:bg-gray-50/50'
       }`}
       onClick={(e) => {
         e.stopPropagation();
         onSelect(element.id);
       }}
     >
-      {/* Toolbar */}
-      <div className={`absolute -top-8 left-0 flex items-center gap-0.5 z-20 transition-opacity ${
-        isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+      {/* Left selection indicator - positioned outside element */}
+      <div
+        className={`absolute -left-[5px] top-0 bottom-0 w-[5px] bg-indigo-500 transition-all duration-200 z-10 ${
+          isSelected ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+
+      {/* Toolbar - positioned on left side outside element */}
+      <div className={`absolute top-2 -left-[56px] flex flex-col items-center gap-1 z-30 transition-opacity duration-200 ${
+        isSelected ? 'opacity-100' : 'opacity-0 pointer-events-auto'
       }`}>
         <div
           {...attributes}
           {...listeners}
-          className="flex items-center gap-1 bg-indigo-600 text-white rounded px-2 py-1 text-xs cursor-grab active:cursor-grabbing"
+          className="flex items-center justify-center w-8 h-8 bg-indigo-600 text-white rounded shadow-sm cursor-grab active:cursor-grabbing"
+          title={element.type}
         >
-          <GripVertical size={12} />
-          <span className="font-medium">{element.type}</span>
+          <GripVertical size={14} />
         </div>
         <button
           onClick={(e) => { e.stopPropagation(); onMoveUp(); }}
-          className="bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded p-1 shadow-sm"
+          className="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded shadow-sm"
           title="Move up"
         >
-          <ChevronUp size={12} />
+          <ChevronUp size={14} />
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onMoveDown(); }}
-          className="bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded p-1 shadow-sm"
+          className="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded shadow-sm"
           title="Move down"
         >
-          <ChevronDown size={12} />
+          <ChevronDown size={14} />
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
-          className="bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded p-1 shadow-sm"
+          className="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded shadow-sm"
           title="Duplicate"
         >
-          <Copy size={12} />
+          <Copy size={14} />
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          className="bg-white border border-red-200 text-red-500 hover:bg-red-50 rounded p-1 shadow-sm"
+          className="w-8 h-8 flex items-center justify-center bg-white border border-red-200 text-red-500 hover:bg-red-50 rounded shadow-sm"
           title="Delete"
         >
-          <Trash2 size={12} />
+          <Trash2 size={14} />
         </button>
       </div>
 
@@ -352,7 +359,7 @@ export default function Canvas({ elements, selectedId, onSelect, onReorder, onDe
       }}
     >
       <div
-        className="w-full shadow-md rounded-lg overflow-hidden transition-all duration-300"
+        className="w-full shadow-md rounded-lg transition-all duration-300"
         style={{
           maxWidth: emailMeta?.canvasWidth ? `${emailMeta.canvasWidth}px` : '600px',
           minHeight: 100,
@@ -370,7 +377,7 @@ export default function Canvas({ elements, selectedId, onSelect, onReorder, onDe
             items={elements.map(e => e.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="relative" style={{ paddingTop: 4 }}>
+            <div className="relative" style={{ paddingTop: 4, paddingLeft: 8, paddingRight: 8 }}>
               {elements.map((el, index) => (
                 <DroppableElement
                   key={el.id}
