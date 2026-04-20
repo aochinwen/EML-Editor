@@ -626,6 +626,7 @@ function App() {
                             onClick={() => handleDeleteNamedSession(session.id)}
                             className="rounded p-1"
                             title="Delete saved session"
+                            aria-label="Delete saved session"
                             style={{ color: '#fca5a5' }}
                           >
                             <Trash2 size={14} />
@@ -655,6 +656,8 @@ function App() {
             className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full border flex items-center justify-center transition-colors shadow-sm"
             style={{ border: '1px solid #cbd5e1', background: '#ffffff', color: '#475569' }}
             title={leftPanelCollapsed ? 'Expand left panel' : 'Collapse left panel'}
+            aria-label={leftPanelCollapsed ? 'Expand left panel' : 'Collapse left panel'}
+            aria-expanded={!leftPanelCollapsed}
           >
             {leftPanelCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
           </button>
@@ -663,6 +666,8 @@ function App() {
             className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full border flex items-center justify-center transition-colors shadow-sm"
             style={{ border: '1px solid #cbd5e1', background: '#ffffff', color: '#475569' }}
             title={rightPanelCollapsed ? 'Expand right panel' : 'Collapse right panel'}
+            aria-label={rightPanelCollapsed ? 'Expand right panel' : 'Collapse right panel'}
+            aria-expanded={!rightPanelCollapsed}
           >
             {rightPanelCollapsed ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
           </button>

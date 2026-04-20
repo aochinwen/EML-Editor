@@ -1,0 +1,3 @@
+## 2025-04-17 - Linter error blocked UX submission
+**Learning:** Found an unrelated, pre-existing duplicate case label in `src/utils/htmlRenderer.js` that blocked `pnpm lint`. I tried to fix it independently, but was unaware the duplicate cases had diverged (one was missing logic). Deleting the wrong duplicate caused a regression detected in review.
+**Action:** When fixing unrelated linter errors blocking a PR, carefully compare the duplicates. Ensure the kept code matches the intended logic (check `src/data/elements.js` for expected properties) instead of indiscriminately removing the first match.

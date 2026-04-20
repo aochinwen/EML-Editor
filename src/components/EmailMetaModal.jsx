@@ -29,7 +29,7 @@ export default function EmailMetaModal({ meta, onChange, onClose, onExport }) {
               <p className="text-xs text-gray-400">Configure email headers</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100">
+          <button onClick={onClose} aria-label="Close" title="Close" className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100">
             <X size={18} />
           </button>
         </div>

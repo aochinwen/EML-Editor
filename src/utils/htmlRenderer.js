@@ -485,14 +485,6 @@ export function renderElementHtml(element) {
   </tr>
 </table>`;
 
-    case 'footer-logo-links':
-      return `<table width="100%" cellpadding="0" cellspacing="0" style="background:${props.backgroundColor}">
-  <tr><td align="center" style="padding:24px 40px">
-    <img src="${props.logoUrl}" alt="Logo" style="max-height:42px;display:block;margin:0 auto 10px"/>
-    <p style="margin:0;color:${props.textColor};font-size:12px;font-family:sans-serif">${props.address}</p>
-  </td></tr>
-</table>`;
-
     case 'raw-html':
       return `${props.html || ''}`;
 

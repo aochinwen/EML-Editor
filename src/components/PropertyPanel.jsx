@@ -301,7 +301,7 @@ function StringListEditor({ value, onChange, placeholder = 'Item' }) {
             placeholder={`${placeholder} ${i + 1}`}
             className="flex-1 border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
           />
-          <button onClick={() => remove(i)} className="text-red-400 hover:text-red-600 px-1">
+          <button onClick={() => remove(i)} aria-label={`Remove item ${i + 1}`} title="Remove item" className="text-red-400 hover:text-red-600 px-1">
             <X size={14} />
           </button>
         </div>
@@ -320,6 +320,8 @@ function SlideEditor({ slides, onChange, fields }) {
             <span className="text-xs font-medium text-gray-500">Slide {i + 1}</span>
             <button
               onClick={() => onChange((slides || []).filter((_, idx) => idx !== i))}
+              aria-label={`Remove slide ${i + 1}`}
+              title="Remove slide"
               className="text-red-400 hover:text-red-600"
             >
               <X size={13} />
@@ -380,7 +382,7 @@ function ButtonGroupEditor({ buttons, onChange }) {
         <div key={i} className="border border-gray-200 rounded-lg p-2 bg-gray-50">
           <div className="flex justify-between items-center mb-1">
             <span className="text-xs font-medium text-gray-500">Button {i + 1}</span>
-            <button onClick={() => onChange((buttons || []).filter((_, idx) => idx !== i))} className="text-red-400"><X size={13} /></button>
+            <button onClick={() => onChange((buttons || []).filter((_, idx) => idx !== i))} aria-label={`Remove button ${i + 1}`} title="Remove button" className="text-red-400"><X size={13} /></button>
           </div>
           {[
             { key: 'label', label: 'Label' },
@@ -1256,6 +1258,7 @@ export default function PropertyPanel({ element, onUpdate, onDelete, onClose }) 
           <button
             onClick={onDelete}
             title="Delete element"
+            aria-label="Delete element"
             className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
           >
             <Trash2 size={16} />
@@ -1263,6 +1266,7 @@ export default function PropertyPanel({ element, onUpdate, onDelete, onClose }) 
           <button
             onClick={onClose}
             title="Close"
+            aria-label="Close"
             className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors"
           >
             <X size={16} />
