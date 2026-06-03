@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Eye, Download, RotateCcw, Mail, ChevronLeft, ChevronRight, Upload, Save, FolderOpen, Trash2, Settings, Menu, FileJson, FileText, FilePlus, LogOut, Cloud, CloudOff } from 'lucide-react';
+import { Eye, Download, RotateCcw, Mail, ChevronLeft, ChevronRight, Upload, Save, FolderOpen, Trash2, Settings, Menu, FileJson, FileText, FilePlus, LogOut, Cloud, CloudOff, Copy, MoreHorizontal, Pencil } from 'lucide-react';
 import ElementsSidebar from './components/ElementsSidebar';
 import Canvas from './components/Canvas';
 import PropertyPanel from './components/PropertyPanel';
@@ -15,6 +15,8 @@ import {
   clearSessionFromStorage,
   downloadSessionFile,
   deleteNamedSession,
+  duplicateNamedSession,
+  renameNamedSession,
   getStoredDraftSummary,
   listNamedSessions,
   loadSessionFromStorage,
@@ -78,6 +80,7 @@ function App({ user = null, onSignOut = null, cloudEnabled = false }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cloudBusy, setCloudBusy] = useState(null);
   const [unsavedPrompt, setUnsavedPrompt] = useState(null); // { onSaveAndContinue, onDiscard, onCancel }
+  const [sessionMenuOpen, setSessionMenuOpen] = useState(null); // session id with open menu
 
   const selectedElement = elements.find(e => e.id === selectedId) || null;
 
@@ -415,6 +418,58 @@ function App({ user = null, onSignOut = null, cloudEnabled = false }) {
     }
   };
 
+  const handleDuplicateCurrentSession = async () => {
+    const baseName = saveSessionName.trim() || emailMeta.subject?.trim() || `Session ${new Date().toLocaleString()}`;
+    const copyName = `${baseName} - Copy`;
+    setCloudBusy(`Duplicating as "${copyName}"…`);
+    try {
+      const saved = await saveNamedSession(copyName, {
+        elements, selectedId, emailMeta, leftPanelCollapsed, rightPanelCollapsed, activeTheme,
+      });
+      setSavedSessions(prev => {
+        const summary = {
+          id: saved.id, name: saved.name, savedAt: saved.savedAt,
+          subject: saved.subject || saved.session?.emailMeta?.subject || 'Untitled Email',
+          elementCount: saved.elementCount ?? saved.session?.elements?.length ?? 0,
+        };
+        return [summary, ...prev.filter(e => e.id !== summary.id)];
+      });
+    } catch {
+      window.alert('Unable to duplicate session.');
+    } finally {
+      setCloudBusy(null);
+    }
+  };
+
+  const handleDuplicateNamedSession = async (id, currentName) => {
+    const copyName = `${currentName} - Copy`;
+    setCloudBusy(`Duplicating as "${copyName}"…`);
+    try {
+      const saved = await duplicateNamedSession(id, copyName);
+      setSavedSessions(prev => [saved, ...prev]);
+    } catch {
+      window.alert('Unable to duplicate session.');
+    } finally {
+      setCloudBusy(null);
+    }
+  };
+
+  const handleRenameNamedSession = async (id, currentName) => {
+    const newName = window.prompt('Rename session:', currentName);
+    if (newName === null) return;
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed === currentName) return;
+    setCloudBusy(`Renaming to "${trimmed}"…`);
+    try {
+      await renameNamedSession(id, trimmed);
+      setSavedSessions(prev => prev.map(e => e.id === id ? { ...e, name: trimmed } : e));
+    } catch {
+      window.alert('Unable to rename session.');
+    } finally {
+      setCloudBusy(null);
+    }
+  };
+
   const handleExport = async (mode = 'standard', options = {}) => {
     setShowExportModal(false);
     setExporting(true);
@@ -680,6 +735,14 @@ function App({ user = null, onSignOut = null, cloudEnabled = false }) {
                   >
                     Save session
                   </button>
+                  <button
+                    onClick={handleDuplicateCurrentSession}
+                    title="Duplicate current session"
+                    className="rounded-lg px-3 py-2 text-sm font-medium flex items-center gap-1.5"
+                    style={{ background: '#1f2937', border: '1px solid #374151', color: '#d1d5db' }}
+                  >
+                    <Copy size={14} /> Duplicate
+                  </button>
                 </div>
                 <button
                   onClick={handleNewProject}
@@ -713,14 +776,53 @@ function App({ user = null, onSignOut = null, cloudEnabled = false }) {
                               {session.elementCount} block{session.elementCount !== 1 ? 's' : ''} · {formatSavedAt(session.savedAt)}
                             </div>
                           </div>
-                          <button
-                            onClick={() => handleDeleteNamedSession(session.id)}
-                            className="rounded p-1"
-                            title="Delete saved session"
-                            style={{ color: '#fca5a5' }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          <div className="relative">
+                              <button
+                                onClick={() => setSessionMenuOpen(prev => prev === session.id ? null : session.id)}
+                                className="rounded p-1"
+                                title="Session options"
+                                style={{ color: '#9ca3af' }}
+                              >
+                                <MoreHorizontal size={14} />
+                              </button>
+                              {sessionMenuOpen === session.id && (
+                                <>
+                                  <div className="fixed inset-0 z-40" onClick={() => setSessionMenuOpen(null)} />
+                                  <div
+                                    className="absolute right-0 top-full mt-1 w-36 rounded-lg border shadow-xl z-50 py-1"
+                                    style={{ background: '#1e2030', borderColor: '#3d4060' }}
+                                  >
+                                    <button
+                                      onClick={() => { handleRenameNamedSession(session.id, session.name); setSessionMenuOpen(null); }}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors"
+                                      style={{ color: '#d1d5db' }}
+                                      onMouseEnter={e => { e.currentTarget.style.background = '#252840'; }}
+                                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                                    >
+                                      <Pencil size={12} /> Rename
+                                    </button>
+                                    <button
+                                      onClick={() => { handleDuplicateNamedSession(session.id, session.name); setSessionMenuOpen(null); }}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors"
+                                      style={{ color: '#d1d5db' }}
+                                      onMouseEnter={e => { e.currentTarget.style.background = '#252840'; }}
+                                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                                    >
+                                      <Copy size={12} /> Duplicate
+                                    </button>
+                                    <button
+                                      onClick={() => { handleDeleteNamedSession(session.id); setSessionMenuOpen(null); }}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors"
+                                      style={{ color: '#fca5a5' }}
+                                      onMouseEnter={e => { e.currentTarget.style.background = '#252840'; }}
+                                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                                    >
+                                      <Trash2 size={12} /> Delete
+                                    </button>
+                                  </div>
+                                </>
+                              )}
+                            </div>
                         </div>
                         <button
                           onClick={() => handleLoadNamedSession(session.id)}

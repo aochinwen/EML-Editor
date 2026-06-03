@@ -239,7 +239,7 @@ export async function listNamedSessions() {
   if (userId) {
     const { data, error } = await supabase
       .from('sessions')
-      .select('id, name, subject, element_count, updated_at')
+      .select('id, name, subject, element_count, updated_at, user_id')
       .order('updated_at', { ascending: false });
 
     if (error) {
@@ -253,6 +253,7 @@ export async function listNamedSessions() {
       savedAt: row.updated_at,
       subject: row.subject || 'Untitled Email',
       elementCount: row.element_count || 0,
+      userId: row.user_id,
     }));
   }
 
@@ -342,6 +343,80 @@ export async function loadNamedSession(id) {
     throw new Error('Saved session not found.');
   }
   return restoreEditorSession(session.session);
+}
+
+export async function renameNamedSession(id, newName) {
+  const trimmedName = `${newName || ''}`.trim();
+  if (!trimmedName) throw new Error('Session name is required.');
+
+  const userId = await getCurrentUserId();
+  if (userId) {
+    const { error } = await supabase.from('sessions').update({ name: trimmedName }).eq('id', id);
+    if (error) throw error;
+    return trimmedName;
+  }
+
+  const sessions = await getRawNamedSessions();
+  await setRawNamedSessions(sessions.map((e) => (e.id === id ? { ...e, name: trimmedName } : e)));
+  return trimmedName;
+}
+
+export async function duplicateNamedSession(id, copyName) {
+  const trimmedName = `${copyName || ''}`.trim();
+  if (!trimmedName) throw new Error('Session name is required.');
+
+  const userId = await getCurrentUserId();
+  if (userId) {
+    const { data, error } = await supabase
+      .from('sessions')
+      .select('document, subject, element_count')
+      .eq('id', id)
+      .single();
+    if (error || !data) throw new Error('Session not found.');
+
+    const payload = {
+      user_id: userId,
+      name: trimmedName,
+      document: { ...data.document, savedAt: new Date().toISOString() },
+      subject: data.subject,
+      element_count: data.element_count,
+    };
+
+    const { data: saved, error: saveError } = await supabase
+      .from('sessions')
+      .insert(payload)
+      .select('id, name, subject, element_count, updated_at')
+      .single();
+    if (saveError) throw saveError;
+
+    return {
+      id: saved.id,
+      name: saved.name,
+      savedAt: saved.updated_at,
+      subject: saved.subject || 'Untitled Email',
+      elementCount: saved.element_count || 0,
+    };
+  }
+
+  const sessions = await getRawNamedSessions();
+  const original = sessions.find((e) => e.id === id);
+  if (!original) throw new Error('Session not found.');
+
+  const copyEntry = {
+    id: `session-${Date.now()}`,
+    name: trimmedName,
+    savedAt: new Date().toISOString(),
+    session: { ...original.session, savedAt: new Date().toISOString() },
+  };
+
+  await setRawNamedSessions([copyEntry, ...sessions]);
+  return {
+    id: copyEntry.id,
+    name: copyEntry.name,
+    savedAt: copyEntry.savedAt,
+    subject: copyEntry.session?.emailMeta?.subject || 'Untitled Email',
+    elementCount: Array.isArray(copyEntry.session?.elements) ? copyEntry.session.elements.length : 0,
+  };
 }
 
 export async function deleteNamedSession(id) {
