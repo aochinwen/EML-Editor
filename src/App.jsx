@@ -77,6 +77,7 @@ function App({ user = null, onSignOut = null, cloudEnabled = false }) {
   const [showGlobalSettings, setShowGlobalSettings] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [cloudBusy, setCloudBusy] = useState(null);
+  const [unsavedPrompt, setUnsavedPrompt] = useState(null); // { onSaveAndContinue, onDiscard, onCancel }
 
   const selectedElement = elements.find(e => e.id === selectedId) || null;
 
@@ -221,12 +222,45 @@ function App({ user = null, onSignOut = null, cloudEnabled = false }) {
     }
   };
 
+  // Returns a promise: 'discard' | 'saved' | 'cancel'
+  const guardUnsaved = () => {
+    const hasWork = elements.length > 0 || emailMeta.subject || emailMeta.from || emailMeta.to;
+    if (!hasWork) return Promise.resolve('discard');
+    return new Promise((resolve) => {
+      setUnsavedPrompt({
+        onSaveAndContinue: async () => {
+          setUnsavedPrompt(null);
+          const fallbackName = emailMeta.subject?.trim() || `Session ${new Date().toLocaleString()}`;
+          const promptedName = window.prompt('Name this session:', saveSessionName.trim() || fallbackName);
+          if (promptedName === null) { resolve('cancel'); return; }
+          const targetName = promptedName.trim() || fallbackName;
+          setCloudBusy(`Saving "${targetName}"…`);
+          try {
+            const saved = await saveNamedSession(targetName, {
+              elements, selectedId, emailMeta, leftPanelCollapsed, rightPanelCollapsed, activeTheme,
+            });
+            setSaveSessionName(targetName);
+            setSavedSessions(prev => {
+              const summary = {
+                id: saved.id, name: saved.name, savedAt: saved.savedAt,
+                subject: saved.subject || saved.session?.emailMeta?.subject || 'Untitled Email',
+                elementCount: saved.elementCount ?? saved.session?.elements?.length ?? 0,
+              };
+              return [summary, ...prev.filter(e => e.id !== summary.id)];
+            });
+          } catch { window.alert('Unable to save this named session.'); resolve('cancel'); return; }
+          finally { setCloudBusy(null); }
+          resolve('saved');
+        },
+        onDiscard: () => { setUnsavedPrompt(null); resolve('discard'); },
+        onCancel: () => { setUnsavedPrompt(null); resolve('cancel'); },
+      });
+    });
+  };
+
   const handleNewProject = async () => {
-    if (elements.length > 0 || emailMeta.subject || emailMeta.from || emailMeta.to) {
-      if (!window.confirm('Start a new email? Current work will be discarded.')) {
-        return;
-      }
-    }
+    const result = await guardUnsaved();
+    if (result === 'cancel') return;
     setElements([]);
     setSelectedId(null);
     setEmailMeta(defaultMeta);
@@ -318,9 +352,11 @@ function App({ user = null, onSignOut = null, cloudEnabled = false }) {
 
   const handleSaveNamedSession = async () => {
     const fallbackName = emailMeta.subject?.trim() || `Session ${new Date().toLocaleString()}`;
-    const targetName = saveSessionName.trim() || fallbackName;
+    const promptedName = window.prompt('Name this session:', saveSessionName.trim() || fallbackName);
+    if (promptedName === null) return;
+    const targetName = promptedName.trim() || fallbackName;
 
-    setCloudBusy(cloudEnabled ? `Saving "${targetName}"…` : `Saving "${targetName}"…`);
+    setCloudBusy(`Saving "${targetName}"…`);
     try {
       const saved = await saveNamedSession(targetName, {
         elements,
@@ -352,6 +388,8 @@ function App({ user = null, onSignOut = null, cloudEnabled = false }) {
   };
 
   const handleLoadNamedSession = async (id) => {
+    const result = await guardUnsaved();
+    if (result === 'cancel') return;
     setCloudBusy('Loading session…');
     try {
       const restoredSession = await loadNamedSession(id);
@@ -635,21 +673,21 @@ function App({ user = null, onSignOut = null, cloudEnabled = false }) {
             {!leftPanelCollapsed && (
               <div className="border-t px-4 py-4" style={{ background: '#111827', borderColor: '#2a2d3e' }}>
                 <div className="flex items-center gap-2">
-                  <input
-                    value={saveSessionName}
-                    onChange={(e) => setSaveSessionName(e.target.value)}
-                    placeholder="Name this session"
-                    className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none"
-                    style={{ background: '#1f2937', borderColor: '#374151', color: '#f9fafb' }}
-                  />
                   <button
                     onClick={handleSaveNamedSession}
-                    className="px-3 py-2 text-sm rounded-lg font-medium"
+                    className="flex-1 rounded-lg px-3 py-2 text-sm font-medium"
                     style={{ background: '#4f46e5', color: '#fff' }}
                   >
-                    Save
+                    Save session
                   </button>
                 </div>
+                <button
+                  onClick={handleNewProject}
+                  className="mt-2 w-full rounded-lg px-3 py-2 text-sm font-medium text-left"
+                  style={{ background: '#1f2937', borderColor: '#374151', color: '#d1d5db', border: '1px solid #374151' }}
+                >
+                  + New session
+                </button>
                 <div className="mt-3">
                   <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#9ca3af' }}>
                     Saved sessions
@@ -751,6 +789,39 @@ function App({ user = null, onSignOut = null, cloudEnabled = false }) {
           />
         </div>
       </div>
+
+      {/* Unsaved Work Guard Modal */}
+      {unsavedPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)' }}>
+          <div className="rounded-xl border p-6 shadow-2xl w-80" style={{ background: '#1f2937', borderColor: '#374151' }}>
+            <div className="text-sm font-semibold text-white mb-1">Unsaved changes</div>
+            <div className="text-xs mb-5" style={{ color: '#9ca3af' }}>What would you like to do with your current session?</div>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={unsavedPrompt.onSaveAndContinue}
+                className="w-full rounded-lg px-4 py-2 text-sm font-medium"
+                style={{ background: '#4f46e5', color: '#fff' }}
+              >
+                Save current then continue
+              </button>
+              <button
+                onClick={unsavedPrompt.onDiscard}
+                className="w-full rounded-lg px-4 py-2 text-sm font-medium"
+                style={{ background: '#374151', color: '#f9fafb' }}
+              >
+                Continue without saving
+              </button>
+              <button
+                onClick={unsavedPrompt.onCancel}
+                className="w-full rounded-lg px-4 py-2 text-sm font-medium"
+                style={{ background: 'transparent', color: '#6b7280' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Export Modal */}
       {showExportModal && (
